@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+        
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>时序数据库-InfluxDB |  SUNTFの博客</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/images/icon.png" />
+       
+<link rel="stylesheet" href="../../../../../../dist/main.css">
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/css/remixicon.min.css"
+      />
+      
+<link rel="stylesheet" href="../../../../../../css/custom.css">
+ 
+      <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+       
+ 
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bulma@5.0.1/bulma.min.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <link rel="alternate" href="atom.xml" title="SUNTFの博客" type="application/atom+xml">
+</head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-learning-summary/数据库/时序数据库-InfluxDB"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  时序数据库-InfluxDB
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="" class="article-date">
+  <time datetime="2021-09-24T05:06:09.000Z" itemprop="datePublished">2021-09-24</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="../../../../../../categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a> / <a class="article-category-link" href="../../../../../../categories/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%97%B6%E5%BA%8F/">时序</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.5k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">8 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p>时序数据库-InfluxDB</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> influxdb 2.x</span></span><br><span class="line">docker run -d -p 8083:8083 -p8086:8086 --expose 8090 --expose 8099 --name influxDbService influxdb</span><br><span class="line"><span class="meta">#</span><span class="bash"> -d: deamon, 后台启动</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> -p: port, 端口映射，宿主机端口:容器内端口；8083是influxdb的web管理工具端口，8086是influxdb的HTTP API 端口</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> --expose: 允许容器接受外部传入的数据</span></span><br><span class="line"></span><br><span class="line">docker exec -it influxDbService bash</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="Chronograf显示监控数据"><a href="#Chronograf显示监控数据" class="headerlink" title="Chronograf显示监控数据"></a>Chronograf显示监控数据</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --name chronograf -p 8888:8888 -v /home/user/chronograf:/var/lib/chronograf chronograf</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Influxdb-基本概念"><a href="#Influxdb-基本概念" class="headerlink" title="Influxdb 基本概念"></a>Influxdb 基本概念</h3><h4 id="Database"><a href="#Database" class="headerlink" title="Database"></a>Database</h4><p>数据库是个逻辑容器，包含了 measurement、retention policies、continuous queries、time series data，类似于 mysql 的 database。</p>
+<h4 id="表（Measurement）"><a href="#表（Measurement）" class="headerlink" title="表（Measurement）"></a>表（Measurement）</h4><p>用于创建索引，提升查询性能，一般存放的是标示数据点来源的属性信息</p>
+<h4 id="Line-Protocol"><a href="#Line-Protocol" class="headerlink" title="Line Protocol"></a>Line Protocol</h4><h4 id="标签（Tag）"><a href="#标签（Tag）" class="headerlink" title="标签（Tag）"></a>标签（Tag）</h4><p>用于创建索引，提升查询性能，一般存放的是标示数据点来源的属性信息</p>
+<h4 id="Field"><a href="#Field" class="headerlink" title="Field"></a>Field</h4><p>用于创建索引，提升查询性能，一般存放的是标示数据点来源的属性信息</p>
+<h4 id="时间（Time）"><a href="#时间（Time）" class="headerlink" title="时间（Time）"></a>时间（Time）</h4><p>表示数据生成时的时间戳，与MySQL不同的是，在InfluxDB中，时间几乎可以看作主键的代名词。</p>
+<h4 id="时间序列线（Series）"><a href="#时间序列线（Series）" class="headerlink" title="时间序列线（Series）"></a>时间序列线（Series）</h4><p>表示表名、保留策略、标签集都相同的一组数据。（这些数据存储在内存中，如果 series 太多，会导致 OOM。）</p>
+<h4 id="保留策略（Retention-Policy）"><a href="#保留策略（Retention-Policy）" class="headerlink" title="保留策略（Retention Policy）"></a>保留策略（Retention Policy）</h4><p>定义InfluxDB的数据保留时长和数据存储的副本数，通过设置合理的保存时间（Duration）和副本数（Replication），在提升数据存储可用性的同时，避免数据爆炸。</p>
+<h4 id="Continuous-Query"><a href="#Continuous-Query" class="headerlink" title="Continuous Query"></a>Continuous Query</h4><h4 id="Shard"><a href="#Shard" class="headerlink" title="Shard"></a>Shard</h4><h4 id="时序数据记录（Point）"><a href="#时序数据记录（Point）" class="headerlink" title="时序数据记录（Point）"></a>时序数据记录（Point）</h4><p>表示一条具体的时序数据记录，由时序（Series）和时间戳（Timestamp）唯一标识，类似于MySQL中的一行记录。</p>
+<h3 id="存储引擎"><a href="#存储引擎" class="headerlink" title="存储引擎"></a>存储引擎</h3><h3 id="Influx-proxy-集群代理服务-2-2集群"><a href="#Influx-proxy-集群代理服务-2-2集群" class="headerlink" title="Influx-proxy 集群代理服务 2*2集群"></a>Influx-proxy 集群代理服务 2*2集群</h3><h4 id="Influxdb"><a href="#Influxdb" class="headerlink" title="Influxdb"></a>Influxdb</h4><figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># influxdb.conf</span></span><br><span class="line"></span><br><span class="line"><span class="meta">reporting-disabled</span> = <span class="string">true         # 禁用报告，默认为 false</span></span><br><span class="line"><span class="attr">[meta]</span></span><br><span class="line"><span class="attr">dir</span> = <span class="string">&quot;/root/influxdb/meta&quot;    # 元信息目录</span></span><br><span class="line"><span class="attr">[data]</span></span><br><span class="line"><span class="attr">dir</span> = <span class="string">&quot;/root/influxdb/data&quot;    # 数据目录</span></span><br><span class="line"><span class="meta">wal-dir</span> = <span class="string">&quot;/root/influxdb/wal&quot; # 预写目录</span></span><br><span class="line"><span class="meta">wal-fsync-delay</span> = <span class="string">&quot;10ms&quot;          # SSD 设置为 0s，非 SSD 推荐设置为 0ms-100ms</span></span><br><span class="line"><span class="meta">index-version</span> = <span class="string">&quot;tsi1&quot;            # tsi1 磁盘索引，inmem 内存索引需要大量内存</span></span><br><span class="line"><span class="meta">query-log-enabled</span> = <span class="string">true          # 查询的日志，默认是 true</span></span><br><span class="line"><span class="meta">cache-max-memory-size</span> = <span class="string">&quot;1g&quot;      # 分片缓存写入的最大内存大小，默认是 1g</span></span><br><span class="line"><span class="attr">[coordinator]</span></span><br><span class="line"><span class="meta">write-timeout</span> = <span class="string">&quot;20s&quot;             # 写入请求超时时间，默认为 10s</span></span><br><span class="line"><span class="attr">[http]</span></span><br><span class="line"><span class="comment"># bind-address = &quot;:8086&quot;            # 绑定地址，需要绑定 ip:port 时使用</span></span><br><span class="line"><span class="meta">auth-enabled</span> = <span class="string">false              # 认证开关，默认是 false</span></span><br><span class="line"><span class="meta">log-enabled</span> = <span class="string">true                # http 请求日志，默认是 true</span></span><br><span class="line"><span class="meta">access-log-path</span> = <span class="string">&quot;/var/log/influxdb&quot;</span></span><br><span class="line"><span class="attr">[logging]</span></span><br><span class="line"><span class="attr">level</span> = <span class="string">&quot;info&quot;                    # 日志等级，error、warn、info(默认)、debug</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> influxdb_1</span></span><br><span class="line">docker stop influxdb_1</span><br><span class="line">docker rm influxdb_1</span><br><span class="line">docker run -it -d -p 8086:8086 \</span><br><span class="line">	--name influxdb_1 \</span><br><span class="line">    --expose 8090 --expose 8099 \</span><br><span class="line">	-v /home/influxdb/influxdb_1/data:/root/influxdb/data \</span><br><span class="line">    -v /home/influxdb/influxdb_1/meta:/root/influxdb/meta \</span><br><span class="line">    -v /home/influxdb/influxdb_1/wal:/root/influxdb/wal \</span><br><span class="line">    -v /home/influxdb/influxdb_1/log:/var/log/influxdb \</span><br><span class="line">    -v /home/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf \</span><br><span class="line">    influxdb:1.8</span><br><span class="line">    </span><br><span class="line"><span class="meta">#</span><span class="bash"> influxdb_2</span></span><br><span class="line">docker stop influxdb_2</span><br><span class="line">docker rm influxdb_2</span><br><span class="line">docker run -it -d -p 8087:8086 \</span><br><span class="line">	--name influxdb_2 \</span><br><span class="line">    --expose 8090 --expose 8099 \</span><br><span class="line">	-v /home/influxdb/influxdb_2/data:/root/influxdb/data \</span><br><span class="line">    -v /home/influxdb/influxdb_2/meta:/root/influxdb/meta \</span><br><span class="line">    -v /home/influxdb/influxdb_2/wal:/root/influxdb/wal \</span><br><span class="line">    -v /home/influxdb/influxdb_2/log:/var/log/influxdb \</span><br><span class="line">    -v /home/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf \</span><br><span class="line">    influxdb:1.8</span><br><span class="line">    </span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> influxdb_3</span></span><br><span class="line">docker stop influxdb_3</span><br><span class="line">docker rm influxdb_3</span><br><span class="line">docker run -it -d -p 8088:8086 \</span><br><span class="line">	--name influxdb_3 \</span><br><span class="line">    --expose 8090 --expose 8099 \</span><br><span class="line">	-v /home/influxdb/influxdb_3/data:/root/influxdb/data \</span><br><span class="line">    -v /home/influxdb/influxdb_3/meta:/root/influxdb/meta \</span><br><span class="line">    -v /home/influxdb/influxdb_3/wal:/root/influxdb/wal \</span><br><span class="line">    -v /home/influxdb/influxdb_3/log:/var/log/influxdb \</span><br><span class="line">    -v /home/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf \</span><br><span class="line">    influxdb:1.8</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line"><span class="meta">#</span><span class="bash"> influxdb_4</span></span><br><span class="line">docker stop influxdb_4</span><br><span class="line">docker rm influxdb_4</span><br><span class="line">docker run -it -d -p 8089:8086 \</span><br><span class="line">	--name influxdb_4 \</span><br><span class="line">    --expose 8090 --expose 8099 \</span><br><span class="line">	-v /home/influxdb/influxdb_4/data:/root/influxdb/data \</span><br><span class="line">    -v /home/influxdb/influxdb_4/meta:/root/influxdb/meta \</span><br><span class="line">    -v /home/influxdb/influxdb_4/wal:/root/influxdb/wal \</span><br><span class="line">    -v /home/influxdb/influxdb_4/log:/var/log/influxdb \</span><br><span class="line">    -v /home/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf \</span><br><span class="line">    influxdb:1.8</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="Influxdb-proxy"><a href="#Influxdb-proxy" class="headerlink" title="Influxdb-proxy"></a>Influxdb-proxy</h4><p>文档地址：<a target="_blank" rel="noopener" href="https://github.com/chengshiwen/influx-proxy/wiki">https://github.com/chengshiwen/influx-proxy/wiki</a></p>
+<p>下载地址：<a target="_blank" rel="noopener" href="https://github.com/chengshiwen/influx-proxy/releases/download/v2.5.6/influx-proxy-2.5.6-linux-amd64.tar.gz">https://github.com/chengshiwen/influx-proxy/releases/download/v2.5.6/influx-proxy-2.5.6-linux-amd64.tar.gz</a></p>
+<p>制作镜像：influx-proxy-2.5.6-linux-amd64.tar.gz 解压缩，在文件夹 influx-proxy-2.5.6-linux-amd64 同级目录下，创建 Dockerfile 文件，如下。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> centos</span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> mkdir -p /var/<span class="built_in">log</span>/proxy</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y epel-release</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y golang</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> rm -rf /var/cache/yum//*</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> /influx-proxy-2.5.6-linux-amd64/ influx-proxy</span></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> influx-proxy</span></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">7076</span></span><br><span class="line"><span class="keyword">CMD</span><span class="bash"> [<span class="string">&quot;/influx-proxy/influx-proxy&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> Dockerfile 同级执行 build 命令</span></span><br><span class="line">docker build -t influx-proxy:2.5.6 .</span><br></pre></td></tr></table></figure>
+
+<p>proxy.json</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">&quot;circles&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;circle-1&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;backends&quot;</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;influxdb-1-1&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;http://192.168.1.148:8086&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span></span><br><span class="line">                &#125;,</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;influxdb-1-2&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;http://192.168.1.148:8087&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span></span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;circle-2&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;backends&quot;</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;influxdb-2-1&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;http://192.168.1.148:8088&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span></span><br><span class="line">                &#125;,</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;influxdb-2-2&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;http://192.168.1.148:8089&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span></span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;listen_addr&quot;</span>: <span class="string">&quot;:7076&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;db_list&quot;</span>: [],</span><br><span class="line">    <span class="attr">&quot;data_dir&quot;</span>: <span class="string">&quot;data&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;tlog_dir&quot;</span>: <span class="string">&quot;log&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;hash_key&quot;</span>: <span class="string">&quot;idx&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;flush_size&quot;</span>: <span class="number">10000</span>,</span><br><span class="line">    <span class="attr">&quot;flush_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;check_interval&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;rewrite_interval&quot;</span>: <span class="number">10</span>,</span><br><span class="line">    <span class="attr">&quot;conn_pool_size&quot;</span>: <span class="number">20</span>,</span><br><span class="line">    <span class="attr">&quot;write_timeout&quot;</span>: <span class="number">10</span>,</span><br><span class="line">    <span class="attr">&quot;idle_timeout&quot;</span>: <span class="number">10</span>,</span><br><span class="line">    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">&quot;write_tracing&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">&quot;query_tracing&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">&quot;https_enabled&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">&quot;https_cert&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;https_key&quot;</span>: <span class="string">&quot;&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">docker stop influx_proxy_1</span><br><span class="line">docker rm influx_proxy_1</span><br><span class="line">docker run -it -d -p 7076:7076 \</span><br><span class="line">	--name influx_proxy_1 \</span><br><span class="line">    -v /home/influxdb/proxy.json:/influx-proxy/proxy.json \</span><br><span class="line">    -v /home/influxdb/influx_proxy_1/data:/influx-proxy/data \</span><br><span class="line">    influx-proxy:2.5.6</span><br><span class="line"></span><br><span class="line">docker stop influx_proxy_2</span><br><span class="line">docker rm influx_proxy_2</span><br><span class="line">docker run -it -d -p 7077:7076 \</span><br><span class="line">    --name influx_proxy_2 \</span><br><span class="line">    -v /home/influxdb/proxy.json:/influx-proxy/proxy.json \</span><br><span class="line">    -v /home/influxdb/influx_proxy_2/data:/influx-proxy/data \</span><br><span class="line">    influx-proxy:2.5.6</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="nginx"><a href="#nginx" class="headerlink" title="nginx"></a>nginx</h4><p>nginx.conf</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line">user  root;</span><br><span class="line">worker_processes  2;</span><br><span class="line"></span><br><span class="line">error_log  /var/log/nginx/error.log notice;</span><br><span class="line">pid        /var/run/nginx.pid;</span><br><span class="line"></span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections  1024;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http &#123;</span><br><span class="line">    include       /etc/nginx/mime.types;</span><br><span class="line">    default_type  application/octet-stream;</span><br><span class="line"></span><br><span class="line">    log_format  main  &#x27;$remote_addr - $remote_user [$time_local] &quot;$request&quot; &#x27;</span><br><span class="line">                      &#x27;$status $body_bytes_sent &quot;$http_referer&quot; &#x27;</span><br><span class="line">                      &#x27;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&#x27;;</span><br><span class="line"></span><br><span class="line">    access_log  /var/log/nginx/access.log  main;</span><br><span class="line">    </span><br><span class="line">    port_in_redirect  off;</span><br><span class="line">    </span><br><span class="line">    sendfile  on;</span><br><span class="line">    tcp_nopush  on;</span><br><span class="line">    tcp_nodelay  on;</span><br><span class="line"></span><br><span class="line">    keepalive_timeout  65;</span><br><span class="line">    client_body_timeout  12;</span><br><span class="line">    client_header_timeout  12;</span><br><span class="line">    send_timeout  10;</span><br><span class="line"></span><br><span class="line">    include  /etc/nginx/conf.d/*.conf;</span><br><span class="line"></span><br><span class="line">     upstream myserver &#123;</span><br><span class="line">        server 192.168.1.148:7076;</span><br><span class="line">        server 192.168.1.148:7077;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">     server &#123;</span><br><span class="line">        listen       8080;</span><br><span class="line">        server_name  localhost;</span><br><span class="line"></span><br><span class="line">        #charset koi8-r;</span><br><span class="line">        #access_log  logs/host.access.log  main;</span><br><span class="line"></span><br><span class="line">        location / &#123;</span><br><span class="line">            proxy_redirect off;</span><br><span class="line">            proxy_pass http://myserver;</span><br><span class="line">            proxy_set_header Host $host;</span><br><span class="line">            proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        #error_page  404              /404.html;</span><br><span class="line"></span><br><span class="line">        # redirect server error pages to the static page /50x.html</span><br><span class="line">        #</span><br><span class="line">        error_page   500 502 503 504  /50x.html;</span><br><span class="line">        location = /50x.html &#123;</span><br><span class="line">            root   html;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">docker stop nginx_influx_proxy</span><br><span class="line">docker rm nginx_influx_proxy</span><br><span class="line">docker run -it -d -p 8080:8080 \</span><br><span class="line">    --name nginx_influx_proxy \</span><br><span class="line">    -v /home/influxdb/nginx.conf:/etc/nginx/nginx.conf \</span><br><span class="line">    -v /home/influxdb/nginx/logs:/var/log/nginx \</span><br><span class="line">    nginx</span><br></pre></td></tr></table></figure>
+
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://suntf.github.io/2021/09/24/learning-summary/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%97%B6%E5%BA%8F%E6%95%B0%E6%8D%AE%E5%BA%93-InfluxDB/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>  
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="../../../../../../tags/InfluxDB/" rel="tag">InfluxDB</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="../../%E5%B7%A5%E5%85%B7/Git%20%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Git 常用命令及问题记录
+          
+        </div>
+      </a>
+    
+    
+      <a href="../MongoDB%20%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">MongoDB 基本操作</div>
+      </a>
+    
+  </nav>
+
+   
+<!-- valine评论 -->
+<div id="vcomments-box">
+  <div id="vcomments"></div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script>
+<script>
+  new Valine({
+    el: "#vcomments",
+    app_id: "OPHezzRFWEkJEh1IgKfDDu9l-gzGzoHsz",
+    app_key: "R31yy5tGHsl4ra9HvGRkTzMc",
+    path: window.location.pathname,
+    avatar: "monsterid",
+    placeholder: "给我的文章加点评论吧~",
+    recordIP: true,
+  });
+  const infoEle = document.querySelector("#vcomments .info");
+  if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+    infoEle.childNodes.forEach(function (item) {
+      item.parentNode.removeChild(item);
+    });
+  }
+</script>
+<style>
+  #vcomments-box {
+    padding: 5px 30px;
+  }
+
+  @media screen and (max-width: 800px) {
+    #vcomments-box {
+      padding: 5px 0px;
+    }
+  }
+
+  #vcomments-box #vcomments {
+    background-color: #fff;
+  }
+
+  .v .vlist .vcard .vh {
+    padding-right: 20px;
+  }
+
+  .v .vlist .vcard {
+    padding-left: 10px;
+  }
+</style>
+
+ 
+   
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2020-2021
+        <i class="ri-heart-fill heart_icon"></i> suntf
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+        
+        <span>
+  <span><i class="ri-user-3-fill"></i>访问人数:<span id="busuanzi_value_site_uv"></span></span>
+  <span class="division">|</span>
+  <span><i class="ri-eye-fill"></i>浏览次数:<span id="busuanzi_value_page_pv"></span></span>
+</span>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="../../../../../../index.html"><img src="/images/icon.png" alt="SUNTFの博客"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../index.html">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../tags">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../friends">友链</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/weixin.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/zhifubao.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="../../../../../../js/jquery-3.6.0.min.js"></script>
+ 
+<script src="../../../../../../js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="../../../../../../js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="../../../../../../dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script> 
+<!-- MathJax -->
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+ 
+<script src="../../../../../../js/busuanzi-2.3.pure.min.js"></script>
+ 
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="../../../../../../css/clipboard.css">
+ <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "forest" });
+  }
+</script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

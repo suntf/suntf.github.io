@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+        
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>Java基础不简单，讲一讲枚举 |  SUNTFの博客</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/images/icon.png" />
+       
+<link rel="stylesheet" href="../../../../../../dist/main.css">
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/css/remixicon.min.css"
+      />
+      
+<link rel="stylesheet" href="../../../../../../css/custom.css">
+ 
+      <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+       
+ 
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bulma@5.0.1/bulma.min.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <link rel="alternate" href="atom.xml" title="SUNTFの博客" type="application/atom+xml">
+</head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-learning-summary/Java基础/Java基础不简单，讲一讲枚举"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Java基础不简单，讲一讲枚举
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="" class="article-date">
+  <time datetime="2021-09-24T05:06:09.000Z" itemprop="datePublished">2021-09-24</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="../../../../../../categories/Java/">Java</a> / <a class="article-category-link" href="../../../../../../categories/Java/Java-%E5%9F%BA%E7%A1%80/">Java 基础</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">13 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h1 id="什么是枚举"><a href="#什么是枚举" class="headerlink" title="什么是枚举"></a>什么是枚举</h1><p>枚举是JDK1.5新增的一种数据类型，是一种特殊的类，常用于表示一组常量，比如一年四季，12个月份，星期一到星期天，服务返回的错误码，结算支付的方式等等。枚举是使用enum关键字来定义。</p>
+<h1 id="枚举的使用"><a href="#枚举的使用" class="headerlink" title="枚举的使用"></a>枚举的使用</h1><p>在使用枚举之前我们先探讨一个问题，为什么要使用枚举。</p>
+<p>现在有个业务场景是结算支付，有支付宝和微信支付两种方式，1表示支付宝，2表示微信支付，还需要根据编码(1或2)获取相应的英文名，如果不用枚举，我们就要这样写。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PayTypeUtil</span> </span>&#123;</span><br><span class="line">    <span class="comment">//支付宝</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> ALI_PAY = <span class="number">1</span>;</span><br><span class="line">    <span class="comment">//微信支付</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> WECHAT_PAY = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//根据编码获取支付方式的名称</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getPayName</span><span class="params">(<span class="keyword">int</span> code)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (ALI_PAY == code) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;Ali_Pay&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (WECHAT_PAY == code) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;Wechat_Pay&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果这时，产品经理说要增加一个银联支付，就要加多if的判断，就会造成有多少种支付方式，就有多少个<code>if</code>，非常难看。</p>
+<p>如果使用枚举，就变得很优雅，先看代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">PayTypeEnum</span> </span>&#123;</span><br><span class="line">    <span class="comment">/** 支付宝*/</span></span><br><span class="line">    ALI_PAY(<span class="number">1</span>, <span class="string">&quot;ALI_PAY&quot;</span>),</span><br><span class="line">    <span class="comment">/** 微信支付*/</span></span><br><span class="line">    WECHAT_PAY(<span class="number">2</span>, <span class="string">&quot;WECHAT_PAY&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> code;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String describe;</span><br><span class="line"></span><br><span class="line">    PayTypeEnum(<span class="keyword">int</span> code, String describe) &#123;</span><br><span class="line">        <span class="keyword">this</span>.code = code;</span><br><span class="line">        <span class="keyword">this</span>.describe = describe;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//根据编码获取支付方式</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> PayTypeEnum <span class="title">find</span><span class="params">(<span class="keyword">int</span> code)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (PayTypeEnum payTypeEnum : values()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (payTypeEnum.getCode() == code) &#123;</span><br><span class="line">                <span class="keyword">return</span> payTypeEnum;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//getter、setter方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当我们需要扩展，只需要定义多一个实例即可，其他代码都不用动，比如加多一个银联支付。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** 支付宝*/</span></span><br><span class="line">ALI_PAY(<span class="number">1</span>, <span class="string">&quot;ALI_PAY&quot;</span>),</span><br><span class="line"><span class="comment">/** 微信支付*/</span></span><br><span class="line">WECHAT_PAY(<span class="number">2</span>, <span class="string">&quot;WECHAT_PAY&quot;</span>),</span><br><span class="line"><span class="comment">//只需要加多一行代码即可完成扩展</span></span><br><span class="line"><span class="comment">/** 银联支付*/</span></span><br><span class="line">UNION_PAY(<span class="number">3</span>,<span class="string">&quot;UNION_PAY&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>一般在实际项目中，最多的写法就是这样，主要是简单明了，易于扩展。</p>
+<p>第二种常见的用法是结合switch-case使用，比如我定义一个一年四季的枚举。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">Season</span> </span>&#123;</span><br><span class="line">    <span class="comment">//春</span></span><br><span class="line">    SPRING,</span><br><span class="line">    <span class="comment">//夏</span></span><br><span class="line">    SUMMER, </span><br><span class="line">    <span class="comment">//秋</span></span><br><span class="line">    AUTUMN, </span><br><span class="line">    <span class="comment">//冬</span></span><br><span class="line">    WINTER;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后结合switch使用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">    doSomething(Season.SPRING);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">doSomething</span><span class="params">(Season season)</span></span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (season)&#123;</span><br><span class="line">        <span class="keyword">case</span> SPRING:</span><br><span class="line">            System.out.println(<span class="string">&quot;不知细叶谁裁出，二月春风似剪刀&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> SUMMER:</span><br><span class="line">            System.out.println(<span class="string">&quot;接天莲叶无穷碧，映日荷花别样红&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> AUTUMN:</span><br><span class="line">            System.out.println(<span class="string">&quot;停车坐爱枫林晚，霜叶红于二月花&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> WINTER:</span><br><span class="line">            System.out.println(<span class="string">&quot;梅花香自苦寒来，宝剑锋从磨砺出&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            System.out.println(<span class="string">&quot;垂死病中惊坐起，笑问客从何处来&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可能很多人觉得直接用int，String类型配合switch使用就够了，为什么还要支持枚举，这样的设计是不是显得很多余，其实非也。</p>
+<p>不妨反过来想，假如用1到4代表四季，接收的参数类型就是int，在没有提示的情况下，我们仅仅只知道数int类型是很难猜到需要传入数字的范围，字符串也是一样，如果不用枚举你是很难一眼看出需要传入什么参数，这才是最关键的。</p>
+<p>如果使用枚举，那么问题就迎刃而解，当你调用doSomething()方法时，一看到枚举就知道传入的是哪几个参数，因为已经在枚举类里面定义好了。<strong>这对于项目交接，还有代码的可读性都是非常有利的</strong>。</p>
+<p>这种限制不单止限制了调用方，也限制了传入的参数只能是定义好的枚举，不用担心传入的参数错误导致的程序错误。</p>
+<p>所以枚举类使用得恰当，对于项目的可维护性是有很大提升的。</p>
+<h1 id="枚举本身的方法"><a href="#枚举本身的方法" class="headerlink" title="枚举本身的方法"></a>枚举本身的方法</h1><p>首先我们先以上面的支付类型枚举PayTypeEnum为例子，看看有哪些自带的方法。</p>
+<h2 id="valueOf-方法"><a href="#valueOf-方法" class="headerlink" title="valueOf()方法"></a>valueOf()方法</h2><p>这是一个静态方法，传入一个字符串(枚举的名称)，获取枚举类。如果传入的名称不存在，则报错。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">    System.out.println(PayTypeEnum.valueOf(<span class="string">&quot;ALI_PAY&quot;</span>));</span><br><span class="line">    System.out.println(PayTypeEnum.valueOf(<span class="string">&quot;HUAWEI_PAY&quot;</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/enum_1.png"></p>
+<h2 id="values-方法"><a href="#values-方法" class="headerlink" title="values()方法"></a>values()方法</h2><p>返回包含枚举类中所有枚举数据的一个数组。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    PayTypeEnum[] payTypeEnums = PayTypeEnum.values();</span><br><span class="line">    <span class="keyword">for</span> (PayTypeEnum payTypeEnum : payTypeEnums) &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;code: &quot;</span> + payTypeEnum.getCode() + <span class="string">&quot;,describe: &quot;</span> + payTypeEnum.getDescribe());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/enum_2.png"></p>
+<h2 id="ordinal-方法"><a href="#ordinal-方法" class="headerlink" title="ordinal()方法"></a>ordinal()方法</h2><p>默认情况下，枚举类会给定义的枚举提供一个默认的次序，ordinal()方法就可以返回枚举的次序。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    PayTypeEnum[] payTypeEnums = PayTypeEnum.values();</span><br><span class="line">    <span class="keyword">for</span> (PayTypeEnum payTypeEnum : payTypeEnums) &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;ordinal: &quot;</span> + payTypeEnum.ordinal() + <span class="string">&quot;, Enum: &quot;</span> + payTypeEnum);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">ordinal: 0, Enum: ALI_PAY</span></span><br><span class="line"><span class="comment">ordinal: 1, Enum: WECHAT_PAY</span></span><br><span class="line"><span class="comment">ordinal: 2, Enum: UNION_PAY</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="name-、toString-方法"><a href="#name-、toString-方法" class="headerlink" title="name()、toString()方法"></a>name()、toString()方法</h2><p>返回定义枚举用的名称。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (Season season : Season.values()) &#123;</span><br><span class="line">        System.out.println(season.name());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (Season season : Season.values()) &#123;</span><br><span class="line">        System.out.println(season.toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果都是一样的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SPRING</span><br><span class="line">SUMMER</span><br><span class="line">AUTUMN</span><br><span class="line">WINTER</span><br></pre></td></tr></table></figure>
+
+<p>为什么？因为底层代码是一样，返回的是name。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Enum</span>&lt;<span class="title">E</span> <span class="keyword">extends</span> <span class="title">Enum</span>&lt;<span class="title">E</span>&gt;&gt; <span class="keyword">implements</span> <span class="title">Comparable</span>&lt;<span class="title">E</span>&gt;, <span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> String <span class="title">name</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">	</span><br></pre></td></tr></table></figure>
+
+<p>区别在于toString()方法没有被final修饰，可以重写，name()方法不能重写。</p>
+<h2 id="compareTo-方法"><a href="#compareTo-方法" class="headerlink" title="compareTo()方法"></a>compareTo()方法</h2><p>因为枚举类实现了Comparable接口，所以必须重写compareTo()方法，比较的是枚举的次序，也就是ordinal，源码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(E o)</span> </span>&#123;</span><br><span class="line">    Enum&lt;?&gt; other = (Enum&lt;?&gt;)o;</span><br><span class="line">    Enum&lt;E&gt; self = <span class="keyword">this</span>;</span><br><span class="line">    <span class="keyword">if</span> (self.getClass() != other.getClass() &amp;&amp; <span class="comment">// optimization</span></span><br><span class="line">        self.getDeclaringClass() != other.getDeclaringClass())</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ClassCastException();</span><br><span class="line">    <span class="keyword">return</span> self.ordinal - other.ordinal;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因为实现Comparable接口，所以可以用来排序，比如这样：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="comment">//这里是乱序的枚举数组</span></span><br><span class="line">    Season[] seasons = <span class="keyword">new</span> Season[]&#123;Season.WINTER, Season.AUTUMN, Season.SPRING, Season.SUMMER&#125;;</span><br><span class="line">    <span class="comment">//调用sort方法排序，按默认次序排序</span></span><br><span class="line">    Arrays.sort(seasons);</span><br><span class="line">    <span class="keyword">for</span> (Season season : seasons) &#123;</span><br><span class="line">        System.out.println(season);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果，按照默认次序排序：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">SPRING</span><br><span class="line">SUMMER</span><br><span class="line">AUTUMN</span><br><span class="line">WINTER</span><br></pre></td></tr></table></figure>
+
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>以枚举Season为例，分析一下枚举的底层。表面上看，一个枚举很简单：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">Season</span> </span>&#123;</span><br><span class="line">    <span class="comment">//春</span></span><br><span class="line">    SPRING,</span><br><span class="line">    <span class="comment">//夏</span></span><br><span class="line">    SUMMER,</span><br><span class="line">    <span class="comment">//秋</span></span><br><span class="line">    AUTUMN,</span><br><span class="line">    <span class="comment">//冬</span></span><br><span class="line">    WINTER;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实际上编译器在编译的时候做了很多动作，我们使用<code>javap -v</code>对Season.class文件反编译，可以看到很多细节。</p>
+<p>首先我们看到枚举是继承了抽象类Enum的类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Season extends java.lang.Enum&lt;Season&gt;</span><br></pre></td></tr></table></figure>
+
+<p>第二，通过一段静态代码块初始化枚举。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> &#123;&#125;;</span><br><span class="line">  descriptor: ()V</span><br><span class="line">  flags: ACC_STATIC</span><br><span class="line">  Code:</span><br><span class="line">    stack=<span class="number">4</span>, locals=<span class="number">0</span>, args_size=<span class="number">0</span></span><br><span class="line">       <span class="number">0</span>: <span class="keyword">new</span>           #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">       <span class="number">3</span>: dup</span><br><span class="line">       <span class="number">4</span>: ldc           #<span class="number">7</span>                  <span class="comment">// String SPRING</span></span><br><span class="line">       <span class="number">6</span>: iconst_0</span><br><span class="line">       <span class="number">7</span>: invokespecial #<span class="number">8</span>                  <span class="comment">// Method &quot;&lt;init&gt;&quot;:(Ljava/lang/String;I)V</span></span><br><span class="line">      <span class="number">10</span>: putstatic     #<span class="number">9</span>                  <span class="comment">// Field SPRING:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">13</span>: <span class="keyword">new</span>           #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">      <span class="number">16</span>: dup</span><br><span class="line">      <span class="number">17</span>: ldc           #<span class="number">10</span>                 <span class="comment">// String SUMMER</span></span><br><span class="line">      <span class="number">19</span>: iconst_1</span><br><span class="line">      <span class="number">20</span>: invokespecial #<span class="number">8</span>                  <span class="comment">// Method &quot;&lt;init&gt;&quot;:(Ljava/lang/String;I)V</span></span><br><span class="line">      <span class="number">23</span>: putstatic     #<span class="number">11</span>                 <span class="comment">// Field SUMMER:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">26</span>: <span class="keyword">new</span>           #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">      <span class="number">29</span>: dup</span><br><span class="line">      <span class="number">30</span>: ldc           #<span class="number">12</span>                 <span class="comment">// String AUTUMN</span></span><br><span class="line">      <span class="number">32</span>: iconst_2</span><br><span class="line">      <span class="number">33</span>: invokespecial #<span class="number">8</span>                  <span class="comment">// Method &quot;&lt;init&gt;&quot;:(Ljava/lang/String;I)V</span></span><br><span class="line">      <span class="number">36</span>: putstatic     #<span class="number">13</span>                 <span class="comment">// Field AUTUMN:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">39</span>: <span class="keyword">new</span>           #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">      <span class="number">42</span>: dup</span><br><span class="line">      <span class="number">43</span>: ldc           #<span class="number">14</span>                 <span class="comment">// String WINTER</span></span><br><span class="line">      <span class="number">45</span>: iconst_3</span><br><span class="line">      <span class="number">46</span>: invokespecial #<span class="number">8</span>                  <span class="comment">// Method &quot;&lt;init&gt;&quot;:(Ljava/lang/String;I)V</span></span><br><span class="line">      <span class="number">49</span>: putstatic     #<span class="number">15</span>                 <span class="comment">// Field WINTER:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">52</span>: iconst_4</span><br><span class="line">      <span class="number">53</span>: anewarray     #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">      <span class="number">56</span>: dup</span><br><span class="line">      <span class="number">57</span>: iconst_0</span><br><span class="line">      <span class="number">58</span>: getstatic     #<span class="number">9</span>                  <span class="comment">// Field SPRING:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">61</span>: aastore</span><br><span class="line">      <span class="number">62</span>: dup</span><br><span class="line">      <span class="number">63</span>: iconst_1</span><br><span class="line">      <span class="number">64</span>: getstatic     #<span class="number">11</span>                 <span class="comment">// Field SUMMER:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">67</span>: aastore</span><br><span class="line">      <span class="number">68</span>: dup</span><br><span class="line">      <span class="number">69</span>: iconst_2</span><br><span class="line">      <span class="number">70</span>: getstatic     #<span class="number">13</span>                 <span class="comment">// Field AUTUMN:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">73</span>: aastore</span><br><span class="line">      <span class="number">74</span>: dup</span><br><span class="line">      <span class="number">75</span>: iconst_3</span><br><span class="line">      <span class="number">76</span>: getstatic     #<span class="number">15</span>                 <span class="comment">// Field WINTER:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">79</span>: aastore</span><br><span class="line">      <span class="number">80</span>: putstatic     #<span class="number">1</span>                  <span class="comment">// Field $VALUES:[Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">83</span>: <span class="keyword">return</span></span><br></pre></td></tr></table></figure>
+
+<p>这段静态代码块的作用就是生成四个静态常量字段的值，还生成了$VALUES字段，用于保存枚举类定义的枚举常量。相当于执行了以下代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Season SPRING = <span class="keyword">new</span> Season1();</span><br><span class="line">Season SUMMER = <span class="keyword">new</span> Season2();</span><br><span class="line">Season AUTUMN = <span class="keyword">new</span> Season3();</span><br><span class="line">Season WINTER = <span class="keyword">new</span> Season4();</span><br><span class="line">Season[] $VALUES = <span class="keyword">new</span> Season[<span class="number">4</span>];</span><br><span class="line">$VALUES[<span class="number">0</span>] = SPRING;</span><br><span class="line">$VALUES[<span class="number">1</span>] = SUMMER;</span><br><span class="line">$VALUES[<span class="number">2</span>] = AUTUMN;</span><br><span class="line">$VALUES[<span class="number">3</span>] = WINTER;</span><br></pre></td></tr></table></figure>
+
+<p>第三个，关于values()方法，这是一个静态方法，作用是返回该枚举类的数组，底层实现原理，其实是这样的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> io.github.yehongzhi.user.redisLock.Season[] values();</span><br><span class="line">    Code:</span><br><span class="line">       <span class="number">0</span>: getstatic     #<span class="number">1</span>                  <span class="comment">// Field $VALUES:[Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">       <span class="number">3</span>: invokevirtual #<span class="number">2</span>                  <span class="comment">// Method &quot;[Lio/github/yehongzhi/user/redisLock/Season;&quot;.clone:()Ljava/lang/Object;</span></span><br><span class="line">       <span class="number">6</span>: checkcast     #<span class="number">3</span>                  <span class="comment">// class &quot;[Lio/github/yehongzhi/user/redisLock/Season;&quot;</span></span><br><span class="line">       <span class="number">9</span>: areturn</span><br></pre></td></tr></table></figure>
+
+<p>其实是将静态代码块初始化的$VALUES数组克隆一份，然后强转成Season[]返回。相当于这样：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> Season[] values()&#123;</span><br><span class="line">	<span class="keyword">return</span> (Season[])$VALUES.clone();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以表面上，只是加了一个enum关键字定义枚举，但是底层一旦确认是枚举类，则会由编译器对枚举类进行特殊处理，通过静态代码块初始化枚举，只要是枚举就一定会提供values()方法。</p>
+<p>通过反编译我们也知道所有的枚举父类都是抽象类Enum，所以Enum有的成员变量，实现的接口，子类也会有。</p>
+<p>所以只要是枚举都会有name，ordinal这两个字段，并且我们看Enum的构造器。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Sole constructor.  Programmers cannot invoke this constructor.</span></span><br><span class="line"><span class="comment">* It is for use by code emitted by the compiler in response to</span></span><br><span class="line"><span class="comment">* enum type declarations.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="title">Enum</span><span class="params">(String name, <span class="keyword">int</span> ordinal)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.name = name;</span><br><span class="line">    <span class="keyword">this</span>.ordinal = ordinal;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>翻译一下上面那段英文，意思大概是：唯一的构造器，程序员没法调用此构造器，它是供编译器响应枚举类型声明而使用的。得出结论，枚举实例的创建也是由编译器完成的。</p>
+<h1 id="枚举实现单例"><a href="#枚举实现单例" class="headerlink" title="枚举实现单例"></a>枚举实现单例</h1><p>很多人都说，枚举类是最好的实现单例的一种方式，因为枚举类的单例是线程安全，并且是唯一一种不会被破坏的单例模式实现。也就是不能通过反射的方式创建实例，保证了整个应用中只有一个实例，非常硬核的单例。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SingletonObj</span> </span>&#123;</span><br><span class="line">    <span class="comment">//内部类使用枚举</span></span><br><span class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">enum</span> <span class="title">SingletonEnum</span> </span>&#123;</span><br><span class="line">        INSTANCE;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">private</span> SingletonObj singletonObj;</span><br><span class="line">		<span class="comment">//在枚举类的构造器里初始化singletonObj</span></span><br><span class="line">        SingletonEnum() &#123;</span><br><span class="line">            singletonObj = <span class="keyword">new</span> SingletonObj();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">private</span> SingletonObj <span class="title">getSingletonObj</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> singletonObj;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//对外部提供的获取单例的方法</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> SingletonObj <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//获取单例对象，返回</span></span><br><span class="line">        <span class="keyword">return</span> SingletonEnum.INSTANCE.getSingletonObj();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//测试</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        SingletonObj a = SingletonObj.getInstance();</span><br><span class="line">        SingletonObj b = SingletonObj.getInstance();</span><br><span class="line">        System.out.println(a == b);<span class="comment">//true</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>假如有人想通过反射创建枚举类呢，我们以Season枚举为例。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    Constructor&lt;Season&gt; constructor = Season.class.getDeclaredConstructor(String.class, <span class="keyword">int</span>.class);</span><br><span class="line">    constructor.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">    <span class="comment">//通过反射调用构造器，创建枚举</span></span><br><span class="line">    Season season = constructor.newInstance(<span class="string">&quot;NEW_SPRING&quot;</span>, <span class="number">4</span>);</span><br><span class="line">    System.out.println(season);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后就会报错，因为不允许对枚举的构造器使用反射调用。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/enum_3.png"></p>
+<p>查看源码，就可以看到，有个专门针对枚举的<code>if</code>判断。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> T <span class="title">newInstance</span><span class="params">(Object ... initargs)</span> <span class="keyword">throws</span> InstantiationException, IllegalAccessException,IllegalArgumentException, InvocationTargetException </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!override) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!Reflection.quickCheckMemberAccess(clazz, modifiers)) &#123;</span><br><span class="line">            Class&lt;?&gt; caller = Reflection.getCallerClass();</span><br><span class="line">            checkAccess(caller, clazz, <span class="keyword">null</span>, modifiers);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//判断是否是枚举，如果是枚举的话，报、抛出异常</span></span><br><span class="line">    <span class="keyword">if</span> ((clazz.getModifiers() &amp; Modifier.ENUM) != <span class="number">0</span>)</span><br><span class="line">        <span class="comment">//抛出异常，不能通过反射创建枚举</span></span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">&quot;Cannot reflectively create enum objects&quot;</span>);</span><br><span class="line">    ConstructorAccessor ca = constructorAccessor;   <span class="comment">// read volatile</span></span><br><span class="line">    <span class="keyword">if</span> (ca == <span class="keyword">null</span>) &#123;</span><br><span class="line">        ca = acquireConstructorAccessor();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@SuppressWarnings(&quot;unchecked&quot;)</span></span><br><span class="line">    T inst = (T) ca.newInstance(initargs);</span><br><span class="line">    <span class="keyword">return</span> inst;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>枚举看起来好像是很小一部分的知识，其实深入挖掘的话，我们会发现还是有很多地方值得学习的。第一点使用枚举定义常量更容易扩展，而且代码可读性更强，维护性更好。接着第二点是需要了解枚举自带的方法。第三点通过反编译，探索编译器在编译阶段为枚举做了什么事情。最后再讲一下枚举实现单例模式的例子。</p>
+<p>这篇文章讲到这里了，感谢大家的阅读，希望看完这篇文章能有所收获！</p>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://suntf.github.io/2021/09/24/learning-summary/Java%E5%9F%BA%E7%A1%80/Java%E5%9F%BA%E7%A1%80%E4%B8%8D%E7%AE%80%E5%8D%95%EF%BC%8C%E8%AE%B2%E4%B8%80%E8%AE%B2%E6%9E%9A%E4%B8%BE/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>  
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="../../../../../../tags/%E6%9E%9A%E4%B8%BE/" rel="tag">枚举</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="../../JVM/JAVA%20%E8%99%9A%E6%8B%9F%E6%9C%BA%20_JVM/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            JAVA 虚拟机 JVM
+          
+        </div>
+      </a>
+    
+    
+      <a href="../../Java%E8%BF%9B%E9%98%B6/Java%20%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E5%AE%9E%E6%88%98/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Java 性能调优实战</div>
+      </a>
+    
+  </nav>
+
+   
+<!-- valine评论 -->
+<div id="vcomments-box">
+  <div id="vcomments"></div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script>
+<script>
+  new Valine({
+    el: "#vcomments",
+    app_id: "OPHezzRFWEkJEh1IgKfDDu9l-gzGzoHsz",
+    app_key: "R31yy5tGHsl4ra9HvGRkTzMc",
+    path: window.location.pathname,
+    avatar: "monsterid",
+    placeholder: "给我的文章加点评论吧~",
+    recordIP: true,
+  });
+  const infoEle = document.querySelector("#vcomments .info");
+  if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+    infoEle.childNodes.forEach(function (item) {
+      item.parentNode.removeChild(item);
+    });
+  }
+</script>
+<style>
+  #vcomments-box {
+    padding: 5px 30px;
+  }
+
+  @media screen and (max-width: 800px) {
+    #vcomments-box {
+      padding: 5px 0px;
+    }
+  }
+
+  #vcomments-box #vcomments {
+    background-color: #fff;
+  }
+
+  .v .vlist .vcard .vh {
+    padding-right: 20px;
+  }
+
+  .v .vlist .vcard {
+    padding-left: 10px;
+  }
+</style>
+
+ 
+   
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2020-2021
+        <i class="ri-heart-fill heart_icon"></i> suntf
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+        
+        <span>
+  <span><i class="ri-user-3-fill"></i>访问人数:<span id="busuanzi_value_site_uv"></span></span>
+  <span class="division">|</span>
+  <span><i class="ri-eye-fill"></i>浏览次数:<span id="busuanzi_value_page_pv"></span></span>
+</span>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="../../../../../../index.html"><img src="/images/icon.png" alt="SUNTFの博客"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../index.html">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../tags">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../friends">友链</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/weixin.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/zhifubao.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="../../../../../../js/jquery-3.6.0.min.js"></script>
+ 
+<script src="../../../../../../js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="../../../../../../js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="../../../../../../dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script> 
+<!-- MathJax -->
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+ 
+<script src="../../../../../../js/busuanzi-2.3.pure.min.js"></script>
+ 
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="../../../../../../css/clipboard.css">
+ <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "forest" });
+  }
+</script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

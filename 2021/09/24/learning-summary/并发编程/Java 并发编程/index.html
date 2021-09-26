@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+        
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>Java 并发编程 |  SUNTFの博客</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/images/icon.png" />
+       
+<link rel="stylesheet" href="../../../../../../dist/main.css">
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/css/remixicon.min.css"
+      />
+      
+<link rel="stylesheet" href="../../../../../../css/custom.css">
+ 
+      <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+       
+ 
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bulma@5.0.1/bulma.min.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <link rel="alternate" href="atom.xml" title="SUNTFの博客" type="application/atom+xml">
+</head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-learning-summary/并发编程/Java 并发编程"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Java 并发编程
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="" class="article-date">
+  <time datetime="2021-09-24T05:06:09.000Z" itemprop="datePublished">2021-09-24</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="../../../../../../categories/Java/">Java</a> / <a class="article-category-link" href="../../../../../../categories/Java/Java-%E8%BF%9B%E9%98%B6/">Java 进阶</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.5k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">5 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h2 id="Java-并发编程"><a href="#Java-并发编程" class="headerlink" title="Java 并发编程"></a>Java 并发编程</h2><h3 id="可见性、原子性、有序性问题，并发编程-Bug-的源头"><a href="#可见性、原子性、有序性问题，并发编程-Bug-的源头" class="headerlink" title="可见性、原子性、有序性问题，并发编程 Bug 的源头"></a>可见性、原子性、有序性问题，并发编程 Bug 的源头</h3><h4 id="缓存导致的可见性问题"><a href="#缓存导致的可见性问题" class="headerlink" title="缓存导致的可见性问题"></a>缓存导致的可见性问题</h4><p>在单核时代，所有的线程都是在一颗 CPU上执行，CPU缓存与内存的数据一致性容易解决。因为所有线程都是操作同一个 CPU的缓存，一个线程对缓存的写，对另外一个线程来说一定是可见的。例如在下面的图中，线程 A和线程 B都是操作同一个 CPU里面的缓存，所以线程 A更新了变量 V的值，那么线程 B之后再访问变量 V，得到的一定是 V的最新值（线程 A写过的值）。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/bingfa1.png" alt="输入图片说明"></p>
+<p>一个线程对共享变量的修改，另外一个线程能够立刻看到，我们称为<strong>可见性</strong>。</p>
+<p>多核时代，每颗 CPU都有自己的缓存，这时 CPU缓存与内存的数据一致性就没那么容易解决了，当多个线程在不同的 CPU上执行时，这些线程操作的是不同的 CPU缓存。比如下图中，线程 A操作的是 CPU-1上的缓存，而线程 B操作的是 CPU-2上的缓存，很明显，这个时候线程 A对变量 V的操作对于线程 B而言就不具备可见性了。这个就属于硬件程序员给软件程序员挖的“坑”。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/094817_a4f8eca6_1461398.png" alt="输入图片说明" title="1628068856561.png"></p>
+<h4 id="线程切换带来的原子性问题"><a href="#线程切换带来的原子性问题" class="headerlink" title="线程切换带来的原子性问题"></a>线程切换带来的原子性问题</h4><p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/095726_fec1e856_1461398.png" alt="输入图片说明" title="1628076617710.png"></p>
+<p>Java并发程序都是基于多线程的，自然也会涉及到任务切换，也许你想不到，任务切换竟然也是并发编程里诡异 Bug的源头之一。任务切换的时机大多数是在时间片结束的时候，我们现在基本都使用高级语言编程，高级语言里一条语句往往需要多条 CPU指令完成，例如上面代码中的count+=1，至少需要三条 CPU指令。</p>
+<p>指令 1：首先，需要把变量 count从内存加载到 CPU的寄存器；</p>
+<p>指令 2：之后，在寄存器中执行 +1操作；</p>
+<p>指令 3：最后，将结果写入内存（缓存机制导致可能写入的是 CPU缓存而不是内存）。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/095803_71a92de7_1461398.png" alt="输入图片说明" title="1628076707850.png"></p>
+<p>我们潜意识里面觉得 count+=1这个操作是一个不可分割的整体，就像一个原子一样，线程的切换可以发生在 count+=1之前，也可以发生在 count+=1之后，但就是不会发生在中间。我们把一个或者多个操作在 CPU执行的过程中不被中断的特性称为原子性。</p>
+<p>CPU能保证的原子操作是 CPU指令级别的，而不是高级语言的操作符，这是违背我们直觉的地方。因此，很多时候我们需要在高级语言层面保证操作的原子性。</p>
+<h4 id="编译优化带来的有序性问题"><a href="#编译优化带来的有序性问题" class="headerlink" title="编译优化带来的有序性问题"></a>编译优化带来的有序性问题</h4><p>有序性指的是程序按照代码的先后顺序执行。编译器为了优化性能，有时候会改变程序中语句的先后顺序，例如程序中：“a=6；b=7；”编译器优化后可能变成“b=7；a=6；”，在这个例子中，编译器调整了语句的顺序，但是不影响程序的最终结果。不过有时候编译器及解释器的优化可能导致意想不到的 Bug。</p>
+<p>在 Java领域一个经典的案例就是利用双重检查创建单例对象，例如下面的代码：在获取实例 getInstance()的方法中，我们首先判断 instance是否为空，如果为空，则锁定Singleton.class并再次检查 instance是否为空，如果还为空则创建 Singleton的一个实例。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span></span><br><span class="line"><span class="class"><span class="keyword">class</span></span></span><br><span class="line"><span class="class"><span class="title">Singleton</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line"><span class="keyword">static</span></span><br><span class="line">Singleton</span><br><span class="line">instance;</span><br><span class="line"><span class="function"><span class="keyword">static</span></span></span><br><span class="line"><span class="function">Singleton</span></span><br><span class="line"><span class="function"><span class="title">getInstance</span><span class="params">()</span></span>&#123;</span><br><span class="line"><span class="keyword">if</span></span><br><span class="line">(instance</span><br><span class="line">==</span><br><span class="line"><span class="keyword">null</span>)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">synchronized</span>(Singleton.class)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">if</span></span><br><span class="line">(instance</span><br><span class="line">==</span><br><span class="line"><span class="keyword">null</span>)</span><br><span class="line">instance</span><br><span class="line">=</span><br><span class="line"><span class="keyword">new</span></span><br><span class="line">Singleton();</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span></span><br><span class="line">instance;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>假设有两个线程 A、B同时调用 getInstance()方法，他们会同时发现instance==null，于是同时对 Singleton.class加锁，此时 JVM保证只有一个线程能够加锁成功（假设是线程 A），另外一个线程则会处于等待状态（假设是线程 B）；线程 A会创建一个 Singleton实例，之后释放锁，锁释放后，线程 B被唤醒，线程 B再次尝试加锁，此时是可以加锁成功的，加锁成功后，线程 B检查instance==null时会发现，已经创建过 Singleton实例了，所以线程 B不会再创建一个 Singleton实例。</p>
+<p>这看上去一切都很完美，无懈可击，但实际上这个 getInstance()方法并不完美。问题出在哪里呢？出在 new操作上，我们以为的 new操作应该是：</p>
+<p>1.分配一块内存 M；</p>
+<p>2.在内存 M上初始化 Singleton对象；</p>
+<p>3.然后 M的地址赋值给 instance变量。</p>
+<p>但是实际上优化后的执行路径却是这样的：</p>
+<p>1.分配一块内存 M；</p>
+<p>2.将 M的地址赋值给 instance变量；</p>
+<p>3.最后在内存 M上初始化 Singleton对象。</p>
+<p>优化后会导致什么问题呢？我们假设线程 A先执行 getInstance()方法，当执行完指令 2时恰好发生了线程切换，切换到了线程 B上；如果此时线程 B也执行 getInstance()方法，那么线程 B会发现instance!=null，所以直接返回 instance，而此时的instance是没有初始化过的，如果我们这个时候访问 instance的成员变量就可能触发空指针异常。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/095836_8bbb7f93_1461398.png" alt="输入图片说明" title="1628078617275.png"></p>
+<p>缓存导致的可见性问题，线程切换带来的原子性问题，编译优化带来的有序性问题，其实缓存、线程、编译优化的目的和我们写并发程序的目的是相同的，都是提高程序性能。但是技术在解决一个问题的同时，必然会带来另外一个问题，所以在采用一项技术的同时，一定要清楚它带来的问题是什么，以及如何规避。</p>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://suntf.github.io/2021/09/24/learning-summary/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/Java%20%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>  
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="../../../../../../tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="../../%E6%95%B0%E6%8D%AE%E5%BA%93/MongoDB%20%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            MongoDB 基本操作
+          
+        </div>
+      </a>
+    
+    
+      <a href="../../%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/%E3%80%90linux%E3%80%91gitRunner%E6%89%93%E5%8C%85%E6%9C%BA%E6%89%93%E5%8C%85%E9%95%9C%E5%83%8F%E5%87%BA%E7%8E%B0%E7%A9%BA%E9%97%B4%E4%B8%8D%E8%B6%B3%E7%9A%84%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5%E5%8F%8A%E8%A7%A3%E5%86%B3/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">【linux】gitrunner打包机打包镜像出现空间不足的问题排查及解决</div>
+      </a>
+    
+  </nav>
+
+   
+<!-- valine评论 -->
+<div id="vcomments-box">
+  <div id="vcomments"></div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script>
+<script>
+  new Valine({
+    el: "#vcomments",
+    app_id: "OPHezzRFWEkJEh1IgKfDDu9l-gzGzoHsz",
+    app_key: "R31yy5tGHsl4ra9HvGRkTzMc",
+    path: window.location.pathname,
+    avatar: "monsterid",
+    placeholder: "给我的文章加点评论吧~",
+    recordIP: true,
+  });
+  const infoEle = document.querySelector("#vcomments .info");
+  if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+    infoEle.childNodes.forEach(function (item) {
+      item.parentNode.removeChild(item);
+    });
+  }
+</script>
+<style>
+  #vcomments-box {
+    padding: 5px 30px;
+  }
+
+  @media screen and (max-width: 800px) {
+    #vcomments-box {
+      padding: 5px 0px;
+    }
+  }
+
+  #vcomments-box #vcomments {
+    background-color: #fff;
+  }
+
+  .v .vlist .vcard .vh {
+    padding-right: 20px;
+  }
+
+  .v .vlist .vcard {
+    padding-left: 10px;
+  }
+</style>
+
+ 
+   
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2020-2021
+        <i class="ri-heart-fill heart_icon"></i> suntf
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+        
+        <span>
+  <span><i class="ri-user-3-fill"></i>访问人数:<span id="busuanzi_value_site_uv"></span></span>
+  <span class="division">|</span>
+  <span><i class="ri-eye-fill"></i>浏览次数:<span id="busuanzi_value_page_pv"></span></span>
+</span>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="../../../../../../index.html"><img src="/images/icon.png" alt="SUNTFの博客"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../index.html">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../tags">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../friends">友链</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/weixin.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/zhifubao.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="../../../../../../js/jquery-3.6.0.min.js"></script>
+ 
+<script src="../../../../../../js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="../../../../../../js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="../../../../../../dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script> 
+<!-- MathJax -->
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+ 
+<script src="../../../../../../js/busuanzi-2.3.pure.min.js"></script>
+ 
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="../../../../../../css/clipboard.css">
+ <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "forest" });
+  }
+</script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

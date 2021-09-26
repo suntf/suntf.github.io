@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+        
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>Redis 的对象类型 |  SUNTFの博客</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/images/icon.png" />
+       
+<link rel="stylesheet" href="../../../../../../dist/main.css">
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/css/remixicon.min.css"
+      />
+      
+<link rel="stylesheet" href="../../../../../../css/custom.css">
+ 
+      <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+       
+ 
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bulma@5.0.1/bulma.min.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <link rel="alternate" href="atom.xml" title="SUNTFの博客" type="application/atom+xml">
+</head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-learning-summary/缓存/Redis 的对象类型"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Redis 的对象类型
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="" class="article-date">
+  <time datetime="2021-09-26T05:06:09.000Z" itemprop="datePublished">2021-09-26</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="../../../../../../categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a> / <a class="article-category-link" href="../../../../../../categories/%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%BC%93%E5%AD%98/">缓存</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">15 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h2 id="Redis-的对象类型"><a href="#Redis-的对象类型" class="headerlink" title="Redis 的对象类型"></a>Redis 的对象类型</h2><p>Redis使用对象来表示数据库中的键和值，每次当我们在Redis的数据库中新创建一个键值对时，我们至少会创建两个对象，一个对象用作键值对的键（键对象），另一个对象用作键值对的值（值对象）。</p>
+<p>Redis中的每个对象都由一个redisObject结构表示，该结构中和保存数据有关的三个属性分别是type属性、encoding属性和ptr属性：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">redisObject</span> &#123;</span></span><br><span class="line">    <span class="comment">// 类型</span></span><br><span class="line">    <span class="keyword">unsigned</span> type:<span class="number">4</span>;</span><br><span class="line">    <span class="comment">// 编码</span></span><br><span class="line">    <span class="keyword">unsigned</span> encoding:<span class="number">4</span>;</span><br><span class="line">    <span class="comment">// 指向底层实现数据结构的指针</span></span><br><span class="line">    <span class="keyword">void</span> *ptr;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125; robj;</span><br></pre></td></tr></table></figure>
+
+<h3 id="类型"><a href="#类型" class="headerlink" title="类型"></a>类型</h3><p><strong>对象的类型</strong></p>
+<table>
+<thead>
+<tr>
+<th>对象 TYPE 类型常量</th>
+<th>对象的名称</th>
+<th>TYPE 命令的输出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REDIS_STRING</td>
+<td>字符串对象</td>
+<td>string</td>
+</tr>
+<tr>
+<td>REDIS_LIST</td>
+<td>列表对象</td>
+<td>list</td>
+</tr>
+<tr>
+<td>REDIS_HASH</td>
+<td>哈希对象</td>
+<td>hash</td>
+</tr>
+<tr>
+<td>REDIS_SET</td>
+<td>集合对象</td>
+<td>set</td>
+</tr>
+<tr>
+<td>REDIS_ZSET</td>
+<td>有序集合对象</td>
+<td>zset</td>
+</tr>
+</tbody></table>
+<p>对于Redis数据库保存的键值对来说，键总是一个字符串对象，而值则可以是字符串对象、列表对象、哈希对象、集合对象或者有序集合对象的其中一种，因此：</p>
+<p>​    ❑当我们称呼一个数据库键为“字符串键”时，我们指的是“这个数据库键所对应的值为字符串对象”；</p>
+<p>​    ❑当我们称呼一个键为“列表键”时，我们指的是“这个数据库键所对应的值为列表对象”。</p>
+<p>TYPE 命令可以返回数据库键对应的值对象的类型</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> docker 启动 Redis</span></span><br><span class="line">docker run -p 6379:6379 -v /home/app/redis/redis.conf:/etc/redis/redis.conf -v /home/app/redis/data:/data -d redis redis- server /etc/redis/redis.conf --appendonly yes</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash">进入容器</span></span><br><span class="line">docker exec -it ab4e03b5d9c0 bash</span><br><span class="line"><span class="meta">#</span><span class="bash">本地无密码登录</span></span><br><span class="line">redis-cli</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash">redis 版本</span></span><br><span class="line">127.0.0.1:6379&gt; info</span><br><span class="line"><span class="meta">#</span><span class="bash"> Server</span></span><br><span class="line">redis_version:6.2.4</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为字符串对象</span></span><br><span class="line">127.0.0.1:6379&gt; SET msg &quot;hello world&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; TYPE msg</span><br><span class="line">string</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为列表对象</span></span><br><span class="line">127.0.0.1:6379&gt; RPUSH numbers 1 3 5</span><br><span class="line">(integer) 3</span><br><span class="line">127.0.0.1:6379&gt; TYPE numbers</span><br><span class="line">list</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为哈希对象</span></span><br><span class="line">127.0.0.1:6379&gt; HMSET profile name Tom age 25</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; TYPE profile</span><br><span class="line">hash</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为集合对象</span></span><br><span class="line">127.0.0.1:6379&gt; SADD fruits apple banana cherry</span><br><span class="line">(integer) 3</span><br><span class="line">127.0.0.1:6379&gt; TYPE fruits</span><br><span class="line">set</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为有序集合对象</span></span><br><span class="line">127.0.0.1:6379&gt; ZADD price 8.5 apple 5.0 banana</span><br><span class="line">(integer) 2</span><br><span class="line">127.0.0.1:6379&gt; TYPE price</span><br><span class="line">zset</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="编码和底层实现"><a href="#编码和底层实现" class="headerlink" title="编码和底层实现"></a>编码和底层实现</h3><p>对象的ptr指针指向对象的底层实现数据结构，而这些数据结构由对象的encoding属性决定。encoding属性记录了对象所使用的编码，也即是说这个对象使用了什么数据结构作为对象的底层实现。</p>
+<p>对象的编码</p>
+<table>
+<thead>
+<tr>
+<th>编码常量</th>
+<th>编码所对应的底层数据结构</th>
+<th>OBJECT ENCODING 命令输出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REDIS_ENCODING_INT</td>
+<td>long 类型的整数</td>
+<td>“int”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_EMBSTR</td>
+<td>embstr 编码的简单动态字符串（SDS）</td>
+<td>“embstr”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_RAW</td>
+<td>简单动态字符串</td>
+<td>“raw”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_HT</td>
+<td>字典</td>
+<td>“hashtable”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_LINKEDLIST</td>
+<td>双端链表</td>
+<td>“linkedlist”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>压缩列表</td>
+<td>“ziplist”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_INTSET</td>
+<td>整数集合</td>
+<td>“intset”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_SKIPLIST</td>
+<td>跳跃表和字典</td>
+<td>“skiplist”</td>
+</tr>
+</tbody></table>
+<p>每种类型的对象都至少使用了两种不同的编码，下图列出了每种类型的对象可以使用的编码。</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>编码</th>
+<th>对象</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REDIS_STRING</td>
+<td>REDIS_ENCODING_INT</td>
+<td>使用整数值实现的字符串对象</td>
+</tr>
+<tr>
+<td>REDIS_STRING</td>
+<td>REDIS_ENCODING_EMBSTR</td>
+<td>使用 embstr 编码的简单动态字符串实现的字符串对象</td>
+</tr>
+<tr>
+<td>REDIS_STRING</td>
+<td>REDIS_ENCODING_RAW</td>
+<td>使用简单动态字符串实现的字符串对象</td>
+</tr>
+<tr>
+<td>REDIS_LIST</td>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>使用压缩列表实现的列表对象</td>
+</tr>
+<tr>
+<td>REDIS_LIST</td>
+<td>REDIS_ENCODING_LINKEDLIST</td>
+<td>使用双端链表实现的列表对象</td>
+</tr>
+<tr>
+<td>REDIS_HASH</td>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>使用压缩列表实现的哈希对象</td>
+</tr>
+<tr>
+<td>REDIS_HASH</td>
+<td>REDIS_ENCODING_HT</td>
+<td>使用字典实现的哈希对象</td>
+</tr>
+<tr>
+<td>REDIS_SET</td>
+<td>REDIS_ENCODING_INTSET</td>
+<td>使用整数集合实现的集合对象</td>
+</tr>
+<tr>
+<td>REDIS_SET</td>
+<td>REDIS_ENCODING_HT</td>
+<td>使用字典实现的哈希对象</td>
+</tr>
+<tr>
+<td>REDIS_ZSET</td>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>使用压缩列表实现的有序集合对象</td>
+</tr>
+<tr>
+<td>REDIS_ZSET</td>
+<td>REDIS_ENCODING_SKIPLIST</td>
+<td>使用跳跃表和字典实现的有序集合对象</td>
+</tr>
+</tbody></table>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET msg &quot;hello world&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING msg</span><br><span class="line">&quot;embstr&quot;</span><br><span class="line">127.0.0.1:6379&gt; SET story &quot;long long long long long long long long long age ...&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING story</span><br><span class="line">&quot;raw&quot;</span><br><span class="line">127.0.0.1:6379&gt; SADD number 1 3 5</span><br><span class="line">(integer) 3</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;intset&quot;</span><br><span class="line">127.0.0.1:6379&gt; SADD number &quot;seven&quot;</span><br><span class="line">(integer) 1</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;hashtable&quot;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>通过encoding属性来设定对象所使用的编码，而不是为特定类型的对象关联一种固定的编码，极大地提升了Redis的灵活性和效率，因为Redis可以根据不同的使用场景来为一个对象设置不同的编码，从而优化对象在某一场景下的效率。</p>
+<p>举个例子，在列表对象包含的元素比较少时，Redis使用压缩列表作为列表对象的底层实现：</p>
+<p>​        ❑因为压缩列表比双端链表更节约内存，并且在元素数量较少时，在内存中以连续块方式保存的压缩列表比起双端链        表可以更快被载入到缓存中；</p>
+<p>​        ❑随着列表对象包含的元素越来越多，使用压缩列表来保存元素的优势逐渐消失时，对象就会将底层实现从压缩列表        转向功能更强、也更适合保存大量元素的双端链表上面；</p>
+<p>其他类型的对象也会通过使用多种不同的编码来进行类似的优化。</p>
+<p>接下来，分别介绍Redis中的五种不同类型的对象，说明这些对象底层所使用的编码方式，列出对象从一种编码转换成另一种编码所需的条件，以及同一个命令在多种不同编码上的实现方法。</p>
+<h3 id="字符串对象"><a href="#字符串对象" class="headerlink" title="字符串对象"></a>字符串对象</h3><p>字符串对象的编码可以是 <strong>int</strong>、<strong>raw</strong> 或者 <strong>embstr</strong>。</p>
+<p>如果一个字符串对象保存的是整数值，并且这个整数值可以用long类型来表示，那么字符串对象会将整数值保存在字符串对象结构的ptr属性里面（将void*转换成long），并将字符串对象的编码设置为int。</p>
+<p>​                                                            int编码的字符串对象</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/093411_d0af55c5_1461398.png" alt="int编码的字符串对象" title="1627726354097.png"></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET number 10086</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;int&quot;</span><br><span class="line">127.0.0.1:6379&gt; SET number 10086.1</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;embstr&quot;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>如果字符串对象保存的是一个字符串值，并且这个字符串值的长度大于44字节，那么字符串对象将使用一个简单动态字符串（SDS）来保存这个字符串值，并将对象的编码设置为raw。</p>
+<pre><code>     raw编码的字符串对象
+</code></pre>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/093812_236a9f30_1461398.png" alt="raw编码的字符串对象" title="1627727078463.png"></p>
+<p>如果字符串对象保存的是一个字符串值，并且这个字符串值的长度小于等于44字节，那么字符串对象将使用embstr编码的方式来保存这个字符串值。</p>
+<p>embstr编码是专门用于保存短字符串的一种优化编码方式，这种编码和raw编码一样，都使用redisObject结构和sdshdr结构来表示字符串对象，但raw编码会调用两次内存分配函数来分别创建redisObject结构和sdshdr结构，而embstr编码则通过调用一次内存分配函数来分配一块连续的空间，空间中依次包含redisObject和sdshdr两个结构。</p>
+<p>​        embstr编码创建的内存块结构</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/093855_65763ded_1461398.png" alt="embstr编码创建的内存块结构" title="1627738613774.png"></p>
+<p>embstr编码的字符串对象在执行命令时，产生的效果和raw编码的字符串对象执行命令时产生的效果是相同的，但使用embstr编码的字符串对象来保存短字符串值有以下好处：</p>
+<p>​        ❑embstr编码将创建字符串对象所需的内存分配次数从raw编码的两次降低为一次。</p>
+<p>​        ❑释放embstr编码的字符串对象只需要调用一次内存释放函数，而释放raw编码的字符串对象需要调用两次内存释放        函数。</p>
+<p>​        ❑因为embstr编码的字符串对象的所有数据都保存在一块连续的内存里面，所以这种编码的字符串对象比起raw编码        的字符串对象能够更好地利用缓存带来的优势。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET story &quot;Long, long ago there lived a king 11122222222&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt;</span><br><span class="line">127.0.0.1:6379&gt; STRLEN story</span><br><span class="line">(integer) 45</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING story</span><br><span class="line">&quot;raw&quot;</span><br><span class="line">127.0.0.1:6379&gt; SET story &quot;Long, long ago there lived a king 1112222222&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; STRLEN story</span><br><span class="line">(integer) 44</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING story</span><br><span class="line">&quot;embstr&quot;</span><br></pre></td></tr></table></figure>
+
+<p>最后要说的是，可以用long double类型表示的浮点数在Redis中也是作为字符串值来保存的。如果我们要保存一个浮点数到字符串对象里面，那么程序会先将这个浮点数转换成字符串值，然后再保存转换所得的字符串值。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET pi 3.14</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING pi</span><br><span class="line">&quot;embstr&quot;</span><br><span class="line">127.0.0.1:6379&gt; INCRBYFLOAT pi 2.0</span><br><span class="line">&quot;5.14&quot;</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING pi</span><br><span class="line">&quot;embstr&quot;</span><br></pre></td></tr></table></figure>
+
+<p>在有需要的时候，程序会将保存在字符串对象里面的字符串值转换回浮点数值，执行某些操作，然后再将执行操作所得的浮点数值转换回字符串值，并继续保存在字符串对象里面。</p>
+<p>那么程序首先会取出字符串对象里面保存的字符串值”3.14”，将它转换回浮点数值3.14，然后把3.14和2.0相加得出的值5.14转换成字符串”5.14”，并将这个”5.14”保存到字符串对象里面。下表总结并列出了字符串对象保存各种不同类型的值所使用的编码方式。</p>
+<p>字符串对象保存各类型值的编码方式</p>
+<table>
+<thead>
+<tr>
+<th align="left">值</th>
+<th>编码</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">可以用 long 类型保存的整数</td>
+<td>int</td>
+</tr>
+<tr>
+<td align="left">可以用 long double 类型保存的浮点数</td>
+<td>embstr 或者 raw</td>
+</tr>
+<tr>
+<td align="left">字符串值，或者不能 long 类型表示的整数、不能用long double 类型表示的浮点数</td>
+<td>embstr 或者 raw</td>
+</tr>
+</tbody></table>
+<h4 id="编码的转换"><a href="#编码的转换" class="headerlink" title="编码的转换"></a>编码的转换</h4><p>int编码的字符串对象和embstr编码的字符串对象在条件满足的情况下，会被转换为raw编码的字符串对象。</p>
+<p>对于int编码的字符串对象来说，如果我们向对象执行了一些命令，使得这个对象保存的不再是整数值，而是一个字符串值，那么字符串对象的编码将从int变为raw。</p>
+<p>在下面的示例中，我们通过APPEND命令，向一个保存整数值的字符串对象追加了一个字符串值，因为追加操作只能对字符串值执行，所以程序会先将之前保存的整数值10086转换为字符串值”10086”，然后再执行追加操作，操作的执行结果就是一个raw编码的、保存了字符串值的字符串对象：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET number 10086</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;int&quot;</span><br><span class="line">127.0.0.1:6379&gt; APPEND number &quot; is a goog number!&quot;</span><br><span class="line">(integer) 23</span><br><span class="line">127.0.0.1:6379&gt; GET number</span><br><span class="line">&quot;10086 is a goog number!&quot;</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;raw&quot;</span><br></pre></td></tr></table></figure>
+
+<p>另外，因为Redis没有为embstr编码的字符串对象编写任何相应的修改程序（只有int编码的字符串对象和raw编码的字符串对象有这些程序），所以embstr编码的字符串对象实际上是只读的。当我们对embstr编码的字符串对象执行任何修改命令时，程序会先将对象的编码从embstr转换成raw，然后再执行修改命令。因为这个原因，embstr编码的字符串对象在执行修改命令之后，总会变成一个raw编码的字符串对象。</p>
+<p>以下代码展示了一个embstr编码的字符串对象在执行APPEND命令之后，对象的编码从embstr变为raw的例子：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET msg &quot;hello world&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING msg</span><br><span class="line">&quot;embstr&quot;</span><br><span class="line">127.0.0.1:6379&gt; APPEND msg &quot; again!&quot;</span><br><span class="line">(integer) 18</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING msg</span><br><span class="line">&quot;raw&quot;</span><br></pre></td></tr></table></figure>
+
+<h4 id="字符串命令的实现"><a href="#字符串命令的实现" class="headerlink" title="字符串命令的实现"></a>字符串命令的实现</h4><p>因为字符串键的值为字符串对象，所以用于字符串键的所有命令都是针对字符串对象来构建的，下表列举了其中一部分字符串命令，以及这些命令在不同编码的字符串对象下的实现方法。</p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>int 编码的实现方式</th>
+<th>embstr 编码的实现方式</th>
+<th>raw 编码的实现方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SET</td>
+<td>使用 int 编码保存值</td>
+<td>使用 embstr 编码保存值</td>
+<td>使用 raw 编码保存值</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>拷贝对象保存的整数，将这个拷贝转成字符串值，向客户端返回字符串</td>
+<td>直接向客户端返回字符串</td>
+<td>直接向客户端返回字符串</td>
+</tr>
+<tr>
+<td>APPEND</td>
+<td>将对象转成 raw 编码，用 raw 编码的方式执行此操作</td>
+<td>将对象转成 raw 编码，用 raw 编码的方式执行此操作</td>
+<td>调用 sdscatien 函数，将给定字符串追加到现有字符串后面</td>
+</tr>
+<tr>
+<td>INCRBYFLOAT</td>
+<td>取出整数值并将其转换成 long double 类型的浮点数，对这个浮点数进行加法计算，然后将计算结果保存</td>
+<td>取出字符串并尝试转成 long double 类型的浮点数，对这个浮点数进行加法计算，然后将计算结果保存。如果这个字符串不能转成浮点数，向客户端返回一个错误</td>
+<td>取出字符串并尝试转成 long double 类型的浮点数，对这个浮点数进行加法计算，然后将计算结果保存。如果这个字符串不能转成浮点数，向客户端返回一个错误</td>
+</tr>
+<tr>
+<td>INCRBY</td>
+<td>对整数进行加法计算，得出的计算结果会作为整数保存起来</td>
+<td>embstr 编码不能执行此命令，向客户端返回一个错误</td>
+<td>raw 编码不能执行此命令，向客户端返回一个错误</td>
+</tr>
+<tr>
+<td>DECRBY</td>
+<td>对整数进行减法计算，得出的计算结果会作为整数保存起来</td>
+<td>embstr 编码不能执行此命令，向客户端返回一个错误</td>
+<td>raw 编码不能执行此命令，向客户端返回一个错误</td>
+</tr>
+<tr>
+<td>STRLEN</td>
+<td>拷贝对象所保存的整数值，将这个拷贝转成字符串值，计算并返回字符串长度</td>
+<td>调用 sdslen 函数，返回字符串长度</td>
+<td>调用 sdslen 函数，返回字符串长度</td>
+</tr>
+<tr>
+<td>SETRANGE</td>
+<td>将对象转成 raw 编码，按照 raw 编码的方式执行</td>
+<td>将对象转成 raw 编码，按照 raw 编码的方式执行</td>
+<td>将字符串特定索引上的值设置为给定的字符</td>
+</tr>
+<tr>
+<td>GETRANGE</td>
+<td>拷贝对象所保存的整数值，将这个拷贝转成字符串值，然后取出并返回字符串指定索引上的字符</td>
+<td>直接取出并返回字符串指定索引上的字符</td>
+<td>直接取出并返回字符串指定索引上的字符</td>
+</tr>
+</tbody></table>
+<h4 id="简单动态字符"><a href="#简单动态字符" class="headerlink" title="简单动态字符"></a>简单动态字符</h4><p>Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS（Simple DynamicString，简单动态字符串）作为字符串表示。</p>
+<p>比起C字符串，SDS具有以下优点：</p>
+<p>​    1）常数复杂度获取字符串长度。</p>
+<p>​    2）杜绝缓冲区溢出。</p>
+<p>​    3）减少修改字符串长度时所需的内存重分配次数。</p>
+<p>​    4）二进制安全。</p>
+<p>​    5）兼容部分C字符串函数。</p>
+<p>SDS的定义</p>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://suntf.github.io/2021/09/26/learning-summary/%E7%BC%93%E5%AD%98/Redis%20%E7%9A%84%E5%AF%B9%E8%B1%A1%E7%B1%BB%E5%9E%8B/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>  
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="../../../../../../tags/Redis/" rel="tag">Redis</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="../../%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/linux-VMware/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            linux 使用 VMware 启动虚拟机报错
+          
+        </div>
+      </a>
+    
+    
+      <a href="../../../../25/learning-summary/%E5%B7%A5%E5%85%B7/Gitlab%20runner/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Gitlab Runner</div>
+      </a>
+    
+  </nav>
+
+   
+<!-- valine评论 -->
+<div id="vcomments-box">
+  <div id="vcomments"></div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script>
+<script>
+  new Valine({
+    el: "#vcomments",
+    app_id: "OPHezzRFWEkJEh1IgKfDDu9l-gzGzoHsz",
+    app_key: "R31yy5tGHsl4ra9HvGRkTzMc",
+    path: window.location.pathname,
+    avatar: "monsterid",
+    placeholder: "给我的文章加点评论吧~",
+    recordIP: true,
+  });
+  const infoEle = document.querySelector("#vcomments .info");
+  if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+    infoEle.childNodes.forEach(function (item) {
+      item.parentNode.removeChild(item);
+    });
+  }
+</script>
+<style>
+  #vcomments-box {
+    padding: 5px 30px;
+  }
+
+  @media screen and (max-width: 800px) {
+    #vcomments-box {
+      padding: 5px 0px;
+    }
+  }
+
+  #vcomments-box #vcomments {
+    background-color: #fff;
+  }
+
+  .v .vlist .vcard .vh {
+    padding-right: 20px;
+  }
+
+  .v .vlist .vcard {
+    padding-left: 10px;
+  }
+</style>
+
+ 
+   
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2020-2021
+        <i class="ri-heart-fill heart_icon"></i> suntf
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+        
+        <span>
+  <span><i class="ri-user-3-fill"></i>访问人数:<span id="busuanzi_value_site_uv"></span></span>
+  <span class="division">|</span>
+  <span><i class="ri-eye-fill"></i>浏览次数:<span id="busuanzi_value_page_pv"></span></span>
+</span>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="../../../../../../index.html"><img src="/images/icon.png" alt="SUNTFの博客"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../index.html">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../tags">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../friends">友链</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/weixin.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/zhifubao.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="../../../../../../js/jquery-3.6.0.min.js"></script>
+ 
+<script src="../../../../../../js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="../../../../../../js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="../../../../../../dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script> 
+<!-- MathJax -->
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+ 
+<script src="../../../../../../js/busuanzi-2.3.pure.min.js"></script>
+ 
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="../../../../../../css/clipboard.css">
+ <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "forest" });
+  }
+</script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

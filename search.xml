@@ -19,17 +19,159 @@
 ]]></content>
   </entry>
   <entry>
+    <title>String类</title>
+    <url>/2021/09/24/learning-summary/Java%E5%9F%BA%E7%A1%80/String%E7%B1%BB/</url>
+    <content><![CDATA[<h1 id="String类"><a href="#String类" class="headerlink" title="String类"></a>String类</h1><p>在Java中String类的使用的频率可谓相当高。它是Java语言中的核心类，在java.lang包下，主要用于字符串的比较、查找、拼接等等操作。如果要深入理解一个类，最好的方法就是看看源码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">String</span> <span class="keyword">implements</span> <span class="title">java</span>.<span class="title">io</span>.<span class="title">Serializable</span>, <span class="title">Comparable</span>&lt;<span class="title">String</span>&gt;, <span class="title">CharSequence</span> </span>&#123;</span><br><span class="line">    <span class="comment">/** The value is used for character storage. */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">char</span> value[];</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Cache the hash code for the string */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> hash; <span class="comment">// Default to 0</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从源码中，可以看出以下几点：</p>
+<ul>
+<li>String类被final关键字修饰，表示String类不能被继承，并且它的成员方法都默认为final方法。</li>
+<li>String类实现了Serializable、CharSequence、 Comparable接口。</li>
+<li>String类的值是通过char数组存储的，并且char数组被private和final修饰，字符串一旦创建就不能再修改。</li>
+</ul>
+<p>下面通过几个问题不断加深对String类的理解。</p>
+<h2 id="问题一"><a href="#问题一" class="headerlink" title="问题一"></a>问题一</h2><p>上面说字符串一旦创建就不能再修改，String类提供的replace()方法不就可以替换修改字符串的内容吗？</p>
+<p>实际上replace()方法并没有对原字符串进行修改，而是创建了一个新的字符串返回，看看源码就知道了。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">replace</span><span class="params">(<span class="keyword">char</span> oldChar, <span class="keyword">char</span> newChar)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (oldChar != newChar) &#123;</span><br><span class="line">        <span class="keyword">int</span> len = value.length;</span><br><span class="line">        <span class="keyword">int</span> i = -<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">char</span>[] val = value; <span class="comment">/* avoid getfield opcode */</span></span><br><span class="line">        <span class="keyword">while</span> (++i &lt; len) &#123;</span><br><span class="line">            <span class="keyword">if</span> (val[i] == oldChar) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (i &lt; len) &#123;</span><br><span class="line">            <span class="keyword">char</span> buf[] = <span class="keyword">new</span> <span class="keyword">char</span>[len];</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; i; j++) &#123;</span><br><span class="line">                buf[j] = val[j];</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">while</span> (i &lt; len) &#123;</span><br><span class="line">                <span class="keyword">char</span> c = val[i];</span><br><span class="line">                buf[i] = (c == oldChar) ? newChar : c;</span><br><span class="line">                i++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//创建一个新的字符串返回</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> String(buf, <span class="keyword">true</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其他方法也是一样，无论是sub、concat还是replace操作都不是在原有的字符串上进行的，而是重新生成了一个新的字符串对象。</p>
+<h2 id="问题二"><a href="#问题二" class="headerlink" title="问题二"></a>问题二</h2><p><strong>为什么要使用final关键字修饰String类？</strong></p>
+<p>首先要讲final修饰类的作用，<strong>被final修饰的类不能被继承</strong>，类中的所有成员方法都会被隐式地指定为final方法。也就是不能拥有子类，成员方法也不能被重写。</p>
+<p>回到问题，String类被final修饰主要基于安全性和效率两点考虑。</p>
+<ul>
+<li>安全性</li>
+</ul>
+<p>因为字符串是不可变的，所以<strong>是多线程安全的</strong>，同一个字符串实例可以被多个线程共享。这样便不用因为线程安全问题而使用同步。字符串自己便是线程安全的。</p>
+<p>String被许多的Java类(库)用来当做参数，比如网络连接地址URL，文件路径path，还有反射机制所需要的String参数等，假若String不是固定不变的，将会引起各种安全隐患。</p>
+<ul>
+<li>效率</li>
+</ul>
+<p><strong>字符串不变性保证了hash码的唯一性</strong>，因此可以放心的进行缓存，这也是一种性能优化手段，意味着不必每次都取计算新的哈希码。</p>
+<p><strong>只有当字符串是不可变的，字符串池才有可能实现</strong>，字符串常量池是java堆内存中一个特殊的存储区域，当创建一个String对象，假如此字符串值已经存在于常量池中，则不会创建一个新的对象，而是引用已经存在的对象。</p>
+<h1 id="字符串常量池"><a href="#字符串常量池" class="headerlink" title="字符串常量池"></a>字符串常量池</h1><p>字符串的分配和其他对象分配一样，是需要消耗高昂的时间和空间的，而且字符串我们使用的非常多。JVM为了提高性能和减少内存的开销，所以在实例化字符串的时候使用字符串常量池进行优化。</p>
+<p>池化思想其实在Java中并不少见，字符串常量池也是类似的思想，当创建字符串时，JVM会首先检查字符串常量池，如果该字符串已经存在常量池中，那么就直接返回常量池中的实例引用。如果字符串不存在常量池中，就会实例化该字符串并且将其放到常量池中。</p>
+<p>我们可以写个简单的例子证明：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    String s1 = <span class="string">&quot;abc&quot;</span>;</span><br><span class="line">    String s2 = <span class="string">&quot;abc&quot;</span>;</span><br><span class="line">    System.out.println(s1 == s2);<span class="comment">//true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/string_final_01.png"></p>
+<p>还有一个面试中经常问的，new String(“abc”)创建了几个对象？</p>
+<p>这可能就是想考你对字符串常量池的理解，我一般回答是一个或者两个对象。</p>
+<p>如果之前”abc”字符串没有使用过，毫无疑问是创建两个对象，堆中创建了一个String对象，字符串常量池创建了一个，一共两个。</p>
+<p>如果之前已经使用过了”abc”字符串，则不会再在字符串常量池创建对象，而是从字符串常量缓冲区中获取，只会在堆中创建一个String对象。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">String s1 = <span class="string">&quot;abc&quot;</span>;</span><br><span class="line">String s2 = <span class="keyword">new</span> String(<span class="string">&quot;abc&quot;</span>);</span><br><span class="line"><span class="comment">//s2这行代码，只会创建一个对象</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="字符串拼接"><a href="#字符串拼接" class="headerlink" title="字符串拼接"></a>字符串拼接</h1><p>字符串的拼接在Java中是很常见的操作，但是拼接字符串并不是简简单单地使用”+”号即可，还有一些要注意的点，否则会造成效率低下。</p>
+<p>比如下面这段代码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    String s = <span class="string">&quot;&quot;</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">        s+=i;</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(s);<span class="comment">//0123456789</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在循环内使用+=拼接字符串会有什么问题呢？我们反编译一下看看就知道了。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/string_final_02.png"></p>
+<p>其实反编译后，我们可以看到String类使用”+=”拼接的底层其实是使用StringBuilder，先初始化一个StringBuilder对象，然后使用append()方法拼接，最后使用toString()方法得到结果。</p>
+<p>问题在于如果在循环体内使用+=拼接，会创建很多临时的StringBuilder对象，拼接后再调用toString()赋给原String对象。这会生成大量临时对象，严重影响性能。</p>
+<p>所以在循环体内进行字符串拼接时，建议使用StringBuilder或者StringBuffer类，例子如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    StringBuilder s = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">        s.append(i);</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(s.toString());<span class="comment">//0123456789</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>StringBuilder和StringBuffer的区别在于，StringBuffer的方法都被sync关键字修饰，所以是线程安全的，而StringBuilder则是线程不安全的(效率高)。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>回顾一下，本文介绍了String类的不可变的特点，还有字符串常量池的作用，最后简单地从JVM编译的层面对字符串拼接提出一点建议。所谓温故而知新，即使是一些很基础很常见的类，如果深入去探索的话，也会有一番收获。</p>
+<p>这篇文章就讲到这里了，感谢大家的阅读，希望看完大家能有所收获！</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>Java 基础</category>
+      </categories>
+      <tags>
+        <tag>字符串</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>hashcode和equals区别与联系</title>
+    <url>/2021/09/24/learning-summary/Java%E5%9F%BA%E7%A1%80/hashcode%E5%92%8Cequals%E5%8C%BA%E5%88%AB%E4%B8%8E%E8%81%94%E7%B3%BB/</url>
+    <content><![CDATA[<h1 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h1><p>其实很早我就注意到阿里巴巴Java开发规范有一句话：<code>只要重写 equals，就必须重写 hashCode</code>。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/hashcode_equals_1.png" alt="输入图片说明"></p>
+<p>我想很多人都会问为什么，所谓<code>知其然知其所以然</code>，对待知识不单止知道结论还得知道原因。</p>
+<h1 id="hashCode方法"><a href="#hashCode方法" class="headerlink" title="hashCode方法"></a>hashCode方法</h1><p>hashCode()方法的作用是获取哈希码，返回的是一个int整数</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/hashcode_equals_2.png" alt="输入图片说明"></p>
+<p>学过数据结构的都知道，哈希码的作用是确定对象在哈希表的索引下标。比如HashSet和HashMap就是使用了hashCode方法确定索引下标。如果两个对象返回的hashCode相同，就被称为“哈希冲突”。</p>
+<h1 id="equals方法"><a href="#equals方法" class="headerlink" title="equals方法"></a>equals方法</h1><p>equals()方法的作用很简单，就是判断两个对象是否相等，equals()方法是定义在Object类中，而所有的类的父类都是Object，所以如果不重写equals方法则会调用Object类的equals方法。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/hashcode_equals_3.png" alt="输入图片说明"></p>
+<p>Object类的equals方法是用“==”号进行比较，在很多时候，因为==号比较的是两个对象的内存地址而不是实际的值，所以不是很符合业务要求。所以很多时候我们需要重写equals方法，去比较对象中每一个成员变量的值是否相等。</p>
+<h1 id="问题来了"><a href="#问题来了" class="headerlink" title="问题来了"></a>问题来了</h1><blockquote>
+<p> 重写equals()方法就可以比较两个对象是否相等，为什么还要重写hashcode()方法呢？</p>
+</blockquote>
+<p>因为HashSet、HashMap底层在添加元素时，会先判断对象的hashCode是否相等，如果hashCode相等才会用equals()方法比较是否相等。换句话说，HashSet和HashMap在判断两个元素是否相等时，<strong>会先判断hashCode，如果两个对象的hashCode不同则必定不相等</strong>。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/hashcode_equals_8.png" alt="输入图片说明"></p>
+<p>下面我们做一个试验，有一个User类，只重写equals()方法，然后放到Set集合中去重。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">User</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String id;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String name;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Integer age;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">User</span><span class="params">(String id, String name, Integer age)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.id = id;</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">        <span class="keyword">this</span>.age = age;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">equals</span><span class="params">(Object o)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> == o) <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">if</span> (o == <span class="keyword">null</span> || getClass() != o.getClass()) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        User user = (User) o;</span><br><span class="line">        <span class="keyword">return</span> Objects.equals(id, user.id) &amp;&amp;</span><br><span class="line">            Objects.equals(name, user.name) &amp;&amp;</span><br><span class="line">            Objects.equals(age, user.age);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//getter、setter、toString方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们循环创建10个成员变量的值都是一样的User对象，最后放到Set集合中去重。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    List&lt;User&gt; list = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">        User user = <span class="keyword">new</span> User(<span class="string">&quot;1&quot;</span>, <span class="string">&quot;张三&quot;</span>, <span class="number">18</span>);</span><br><span class="line">        list.add(user);</span><br><span class="line">    &#125;</span><br><span class="line">    Set&lt;User&gt; set = <span class="keyword">new</span> HashSet&lt;&gt;(list);</span><br><span class="line">    <span class="keyword">for</span> (User user : set) &#123;</span><br><span class="line">        System.out.println(user);</span><br><span class="line">    &#125;</span><br><span class="line">    List&lt;User&gt; users = list.stream().distinct().collect(Collectors.toList());</span><br><span class="line">    System.out.println(users);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>按道理我们预期会去重，只剩下一个“张三”的user，但实际上因为没有重写hashCode方法，所以没有去重。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/hashcode_equals_4.png" alt="输入图片说明"></p>
+<p>接着我们在User类里面重写一些hashCode方法再试试，其他不变。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">User</span> </span>&#123;</span><br><span class="line">    <span class="comment">//其他不变</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//重写hashCode方法</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">hashCode</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> Objects.hash(id, name, age);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再运行，结果正确。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/hashcode_equals_5.png" alt="输入图片说明"></p>
+<p>究其原因在于HashSet会先判断hashCode是否相等，如果hashCode不相等就直接认为两个对象不相等，不会再用equals()比较了。我们不妨看看重写hashCode方法和不重写hashCode方法的哈希码。</p>
+<p>这是不重写hashCode方法的情况，每个user对象的哈希码都不一样，所以HashSet会认为都不相等。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/hashcode_equals_6.png" alt="输入图片说明"></p>
+<p>这是重写hashCode方法的情况，因为是用对象所有的成员变量的值计算出的哈希码，所以只要两个对象的成员变量都是相等的，则生成的哈希码是相同的。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/hashcode_equals_7.png" alt="输入图片说明"></p>
+<p>那么有些人看到这里，就会问，如果两个对象返回的哈希码都是一样的话，是不是就<strong>一定相等</strong>？</p>
+<p>答案是不一定的，因为HashSet、HashMap判断哈希码相等后还会再用equals()方法判断。</p>
+<p>总而言之：</p>
+<ul>
+<li>哈希码不相等，则两个对象一定不相同。</li>
+<li>哈希码相等，两个对象不一定相同。</li>
+<li>两个对象相同，则哈希码和值都一定相等。</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>所以回到开头讲的那句，<code>只要重写 equals，就必须重写 hashCode</code>，这是一个很重要的细节，如果不注意的话，很容易发生业务上的错误。</p>
+<p>特别是有时候我们明明用了HashSet，distinct()去重，但是就是不生效，这时应该回头看看重写了equals()和hashCode()方法了吗？</p>
+<p>那么这篇文章就写到这里了，感谢大家的阅读。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>Java 基础</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>java8_stream流使用</title>
+    <url>/2021/09/24/learning-summary/Java%E5%9F%BA%E7%A1%80/java8_stream%E6%B5%81%E4%BD%BF%E7%94%A8/</url>
+    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 拼接字符串集合分割组成新集合</span></span><br><span class="line">String picture = <span class="string">&quot;2,34,56&quot;</span>;</span><br><span class="line"></span><br><span class="line">List&lt;Integer&gt; pictureIdList = dpmSopTemps.stream()</span><br><span class="line">    .filter(dpmSopTemp -&gt; !StringUtils.isEmpty(dpmSopTemp.getPicture()))</span><br><span class="line">    .flatMap(dpmSopTemp -&gt; Arrays.stream(dpmSopTemp.getPicture().split(Constants.COMMA)))</span><br><span class="line">    .map(Integer::parseInt)</span><br><span class="line">    .collect(Collectors.toList());</span><br><span class="line"></span><br><span class="line">输出结果： [<span class="number">2</span>,<span class="number">24</span>,<span class="number">56</span>]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// list&lt;Object&gt; 转 map, 自定义属性作为map的key</span></span><br><span class="line">Map&lt;Integer, DpmFile&gt; dpmFileMap = dpmFiles.stream()</span><br><span class="line">    .collect(Collectors.toMap(DpmFile::getId, k -&gt; k));</span><br><span class="line"></span><br><span class="line"><span class="comment">// toMap 如果集合对象有重复的key，会报错Duplicate key ....</span></span><br><span class="line"><span class="comment">// 可以用 (k1,k2)-&gt;k1 来设置，如果有重复的key,则保留key1,舍弃key2</span></span><br><span class="line">Map&lt;Integer, DpmFile&gt; dpmFileMap = dpmFiles.stream()</span><br><span class="line">    .collect(Collectors.toMap(DpmFile::getId, a -&gt; a, (k1,k2)-&gt;k1));</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 获取map 中多个key的结果，转成list</span></span><br><span class="line">String picture = <span class="string">&quot;2,34,56&quot;</span>;</span><br><span class="line">Arrays.stream(picture.split(Constants.COMMA))</span><br><span class="line">    .map(s -&gt; dpmFileMap.get(Integer.parseInt(s)))</span><br><span class="line">    .collect(Collectors.toList())</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 通过list对象的一个属性，对list 分组</span></span><br><span class="line">Map&lt;String, List&lt;DpmMenu&gt;&gt; menuMap = dpmMenus.stream()</span><br><span class="line">    .filter(dpmMenu -&gt; StringUtils.isNotEmpty(dpmMenu.getParentMenu())) .collect(Collectors.groupingBy(d -&gt; d.getParentMenu(), Collectors.toList()));</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>Java 基础</category>
+      </categories>
+      <tags>
+        <tag>stream</tag>
+        <tag>java8</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>怎么在Java中自定义注解</title>
-    <url>/2021/09/24/%E6%80%8E%E4%B9%88%E5%9C%A8Java%E4%B8%AD%E8%87%AA%E5%AE%9A%E4%B9%89%E6%B3%A8%E8%A7%A3/</url>
+    <url>/2021/09/24/learning-summary/Java%E5%9F%BA%E7%A1%80/%E6%80%8E%E4%B9%88%E5%9C%A8Java%E4%B8%AD%E8%87%AA%E5%AE%9A%E4%B9%89%E6%B3%A8%E8%A7%A3/</url>
     <content><![CDATA[<h1 id="什么是注解"><a href="#什么是注解" class="headerlink" title="什么是注解"></a>什么是注解</h1><p>注解是JDK1.5引入的新特性，主要用于简化代码，提高编程的效率。其实在日常开发中，注解并不少见，比如Java内置的<code>@Override</code>、<code>@SuppressWarnings</code>，或者Spring提供的<code>@Service</code>、<code>@Controller</code>等等，随着这些注解使用的频率越来越高，作为开发人员当真有必要深入学习一番。</p>
 <h1 id="Java内置的注解"><a href="#Java内置的注解" class="headerlink" title="Java内置的注解"></a>Java内置的注解</h1><p>先说说Java内置的三个注解，分别是：</p>
 <p><code>@Override</code>：检查当前的方法定义是否覆盖父类中的方法，如果没有覆盖，编译器就会报错。</p>
 <p><code>@SuppressWarnings</code>：忽略编译器的警告信息。</p>
-<p><img src="zhujie3.png"></p>
-<p><img src="zhujie4.png"></p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/zhujie_3.png"></p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/zhujie_4.png" alt="输入图片说明"></p>
 <p><code>@Deprecated</code>：用于标识该类或方法已过时，建议开发人员不要使用该类或方法。</p>
-<p><img src="zhujie1.png"></p>
-<p><img src="zhujie2.png"></p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/zhujie_1.png" alt="输入图片说明"></p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/zhujie_2.png" alt="输入图片说明"></p>
 <h1 id="元注解"><a href="#元注解" class="headerlink" title="元注解"></a>元注解</h1><p>元注解其实就是描述注解的注解。主要有四个元注解，分别是：</p>
 <h2 id="Target"><a href="#Target" class="headerlink" title="@Target"></a>@Target</h2><p>用于描述注解的使用范围，也就是注解可以用在什么地方，取值有：</p>
 <p>CONSTRUCTOR：用于描述构造器。</p>
@@ -40,7 +182,7 @@
 <p>PARAMETER：用于描述参数。</p>
 <p>TYPE：用于描述类，包括class，interface，enum。 </p>
 <h2 id="Retention"><a href="#Retention" class="headerlink" title="@Retention"></a>@Retention</h2><p><strong>表示需要在什么级别保存该注释信息，用于描述注解的生命周期</strong>，取值由枚举RetentionPoicy定义。</p>
-<p><img src="zhujie5.png"></p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/zhujie_5.png" alt="输入图片说明"></p>
 <p>SOURCE：在源文件中有效（即源文件保留），仅出现在源代码中，而被编译器丢弃。</p>
 <p>CLASS：在class文件中有效（即class保留），但会被JVM丢弃。</p>
 <p>RUNTIME：JVM将在运行期也保留注释，因此可以通过反射机制读取注解的信息。</p>
@@ -48,7 +190,7 @@
 <p>如果要在编译时进行一些预处理操作，就用 CLASS。</p>
 <p>如果需要获取注解的属性值，去做一些运行时的逻辑，可以使用RUNTIME。</p>
 <h2 id="Documented"><a href="#Documented" class="headerlink" title="@Documented"></a>@Documented</h2><p>将此注解包含在 javadoc 中 ，它代表着此注解会被javadoc工具提取成文档。它是一个标记注解，没有成员。</p>
-<p><img src="zhujie6.png"></p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/zhujie_6.png" alt="输入图片说明"></p>
 <h2 id="Inherited"><a href="#Inherited" class="headerlink" title="@Inherited"></a>@Inherited</h2><p>是一个标记注解，用来指定该注解可以被继承。使用 @Inherited 注解的 Class 类，表示这个注解可以被用于该 Class 类的子类。</p>
 <h1 id="自定义注解"><a href="#自定义注解" class="headerlink" title="自定义注解"></a>自定义注解</h1><p>下面实战一下，自定义一个注解@LogApi，用于方法上，当被调用时即打印日志，在控制台显示调用方传入的参数和调用返回的结果。</p>
 <h2 id="定义注解"><a href="#定义注解" class="headerlink" title="定义注解"></a>定义注解</h2><p>首先定义注解<code>@LogApi</code>，在方法上使用，为了能在反射中读取注解信息，当然是设置为<code>RUNTIME</code>。</p>
@@ -76,9 +218,9 @@
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@LogApi</span></span><br><span class="line"><span class="meta">@RequestMapping(&quot;/get/&#123;id&#125;&quot;)</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> String <span class="title">get</span><span class="params">(<span class="meta">@PathVariable(name = &quot;id&quot;)</span> String id)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    HashMap&lt;String, Object&gt; user = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line">    user.put(<span class="string">&quot;id&quot;</span>, id);</span><br><span class="line">    user.put(<span class="string">&quot;name&quot;</span>, <span class="string">&quot;关之琳&quot;</span>);</span><br><span class="line">    user.put(<span class="string">&quot;经典角色&quot;</span>, <span class="string">&quot;十三姨&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> JSONObject.toJSONString(user);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>启动项目，然后请求接口<code>list()</code>，我们可以看到控制台出现被调用方法的日志信息。</p>
-<p><img src="zhujie7.png"></p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/zhujie_7.png" alt="输入图片说明"></p>
 <p>请求有参数的接口<code>get()</code>，可以看到参数名称和参数值都被打印在控制台。</p>
-<p><img src="zhujie8.png"></p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/zhujie_8.png" alt="输入图片说明"></p>
 <p>这种记录接口请求参数和返回值的功能，在实际项目中基本上都会使用，因为这能利于系统的排错和性能调优等等。</p>
 <p>我们也可以在这个例子中，学会使用注解和切面编程，可谓是一举两得！</p>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>注解的使用能大大地减少开发的代码量，所以在实际项目的开发中会使用到非常多的注解。特别是做一些公共基础的功能，比如日志记录，事务管理，权限控制这些功能，使用注解就非常高效且优雅。</p>
@@ -86,15 +228,33 @@
 <p>这篇文章讲到这里了，感谢大家的阅读，希望看完这篇文章能有所收获！</p>
 ]]></content>
       <categories>
-        <category>学习</category>
+        <category>Java</category>
+        <category>Java 基础</category>
       </categories>
       <tags>
-        <tag>Java</tag>
+        <tag>注解</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java 数据类型和变量</title>
+    <url>/2021/09/24/learning-summary/Java%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E5%92%8C%E5%8F%98%E9%87%8F/</url>
+    <content><![CDATA[<h2 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h2><p>数据类型用于对数据归类，以便于理解和操作。对Java语言而言，有如下基本数据类型。</p>
+<p>❑ 整数类型：有4种整型byte/short/int/long，分别有不同的取值范围；</p>
+<p>❑ 小数类型：有两种类型float/double，有不同的取值范围和精度；</p>
+<p>❑ 字符类型：char，表示单个字符；</p>
+<p>❑ 真假类型：boolean，表示真假。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>Java 基础</category>
+      </categories>
+      <tags>
+        <tag>数据类型</tag>
       </tags>
   </entry>
   <entry>
     <title>JAVA 虚拟机 JVM</title>
-    <url>/2021/09/24/JAVA%20%E8%99%9A%E6%8B%9F%E6%9C%BA%20_JVM/</url>
+    <url>/2021/09/24/learning-summary/JVM/JAVA%20%E8%99%9A%E6%8B%9F%E6%9C%BA%20_JVM/</url>
     <content><![CDATA[<h2 id="JAVA-虚拟机-JVM"><a href="#JAVA-虚拟机-JVM" class="headerlink" title="JAVA 虚拟机  JVM"></a>JAVA 虚拟机  JVM</h2><h3 id="运行时数据区域"><a href="#运行时数据区域" class="headerlink" title="运行时数据区域"></a>运行时数据区域</h3><p>Java虚拟机在执行Java程序的过程中会把它所管理的内存划分为若干个不同的数据区域。这些区域有各自的用途，以及创建和销毁的时间，有的区域随着虚拟机进程的启动而一直存在，有些区域则是依赖用户线程的启动和结束而建立和销毁。根据《Java虚拟机规范》的规定，Java虚拟机所管理的内存将会包括以下几个运行时数据区域，如下图所示。</p>
 <p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/jvm1.png"></p>
 <h3 id="频繁GC问题或内存溢出问题"><a href="#频繁GC问题或内存溢出问题" class="headerlink" title="频繁GC问题或内存溢出问题"></a>频繁GC问题或内存溢出问题</h3><p>一、使用<code>jps</code>查看线程ID</p>
@@ -108,10 +268,916 @@
 <h3 id="Java-代码是怎么运行的"><a href="#Java-代码是怎么运行的" class="headerlink" title="Java 代码是怎么运行的"></a>Java 代码是怎么运行的</h3><p>Java 代码有很多不同的运行方式，比如说可以在开发工具中运行，可以双击执行 jar 文件运行，</p>
 ]]></content>
       <categories>
-        <category>学习</category>
+        <category>Java</category>
+        <category>Java 进阶</category>
       </categories>
       <tags>
-        <tag>Java</tag>
+        <tag>JVM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Python 入门</title>
+    <url>/2021/09/26/learning-summary/Python/Python%E5%85%A5%E9%97%A8/</url>
+    <content><![CDATA[<h2 id="Python-入门"><a href="#Python-入门" class="headerlink" title="Python 入门"></a>Python 入门</h2><h3 id="Python-语言的特点"><a href="#Python-语言的特点" class="headerlink" title="Python 语言的特点"></a>Python 语言的特点</h3><p>语法简洁</p>
+<p>款平台</p>
+<p>可扩展</p>
+<p>开放源码</p>
+<p>类库丰富</p>
+]]></content>
+      <categories>
+        <category>Python</category>
+        <category>Python 基础</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java基础不简单，讲一讲枚举</title>
+    <url>/2021/09/24/learning-summary/Java%E5%9F%BA%E7%A1%80/Java%E5%9F%BA%E7%A1%80%E4%B8%8D%E7%AE%80%E5%8D%95%EF%BC%8C%E8%AE%B2%E4%B8%80%E8%AE%B2%E6%9E%9A%E4%B8%BE/</url>
+    <content><![CDATA[<h1 id="什么是枚举"><a href="#什么是枚举" class="headerlink" title="什么是枚举"></a>什么是枚举</h1><p>枚举是JDK1.5新增的一种数据类型，是一种特殊的类，常用于表示一组常量，比如一年四季，12个月份，星期一到星期天，服务返回的错误码，结算支付的方式等等。枚举是使用enum关键字来定义。</p>
+<h1 id="枚举的使用"><a href="#枚举的使用" class="headerlink" title="枚举的使用"></a>枚举的使用</h1><p>在使用枚举之前我们先探讨一个问题，为什么要使用枚举。</p>
+<p>现在有个业务场景是结算支付，有支付宝和微信支付两种方式，1表示支付宝，2表示微信支付，还需要根据编码(1或2)获取相应的英文名，如果不用枚举，我们就要这样写。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PayTypeUtil</span> </span>&#123;</span><br><span class="line">    <span class="comment">//支付宝</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> ALI_PAY = <span class="number">1</span>;</span><br><span class="line">    <span class="comment">//微信支付</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> WECHAT_PAY = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//根据编码获取支付方式的名称</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getPayName</span><span class="params">(<span class="keyword">int</span> code)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (ALI_PAY == code) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;Ali_Pay&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (WECHAT_PAY == code) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;Wechat_Pay&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果这时，产品经理说要增加一个银联支付，就要加多if的判断，就会造成有多少种支付方式，就有多少个<code>if</code>，非常难看。</p>
+<p>如果使用枚举，就变得很优雅，先看代码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">PayTypeEnum</span> </span>&#123;</span><br><span class="line">    <span class="comment">/** 支付宝*/</span></span><br><span class="line">    ALI_PAY(<span class="number">1</span>, <span class="string">&quot;ALI_PAY&quot;</span>),</span><br><span class="line">    <span class="comment">/** 微信支付*/</span></span><br><span class="line">    WECHAT_PAY(<span class="number">2</span>, <span class="string">&quot;WECHAT_PAY&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> code;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String describe;</span><br><span class="line"></span><br><span class="line">    PayTypeEnum(<span class="keyword">int</span> code, String describe) &#123;</span><br><span class="line">        <span class="keyword">this</span>.code = code;</span><br><span class="line">        <span class="keyword">this</span>.describe = describe;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//根据编码获取支付方式</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> PayTypeEnum <span class="title">find</span><span class="params">(<span class="keyword">int</span> code)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (PayTypeEnum payTypeEnum : values()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (payTypeEnum.getCode() == code) &#123;</span><br><span class="line">                <span class="keyword">return</span> payTypeEnum;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//getter、setter方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当我们需要扩展，只需要定义多一个实例即可，其他代码都不用动，比如加多一个银联支付。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">/** 支付宝*/</span></span><br><span class="line">ALI_PAY(<span class="number">1</span>, <span class="string">&quot;ALI_PAY&quot;</span>),</span><br><span class="line"><span class="comment">/** 微信支付*/</span></span><br><span class="line">WECHAT_PAY(<span class="number">2</span>, <span class="string">&quot;WECHAT_PAY&quot;</span>),</span><br><span class="line"><span class="comment">//只需要加多一行代码即可完成扩展</span></span><br><span class="line"><span class="comment">/** 银联支付*/</span></span><br><span class="line">UNION_PAY(<span class="number">3</span>,<span class="string">&quot;UNION_PAY&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>一般在实际项目中，最多的写法就是这样，主要是简单明了，易于扩展。</p>
+<p>第二种常见的用法是结合switch-case使用，比如我定义一个一年四季的枚举。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">Season</span> </span>&#123;</span><br><span class="line">    <span class="comment">//春</span></span><br><span class="line">    SPRING,</span><br><span class="line">    <span class="comment">//夏</span></span><br><span class="line">    SUMMER, </span><br><span class="line">    <span class="comment">//秋</span></span><br><span class="line">    AUTUMN, </span><br><span class="line">    <span class="comment">//冬</span></span><br><span class="line">    WINTER;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后结合switch使用。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">    doSomething(Season.SPRING);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">doSomething</span><span class="params">(Season season)</span></span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (season)&#123;</span><br><span class="line">        <span class="keyword">case</span> SPRING:</span><br><span class="line">            System.out.println(<span class="string">&quot;不知细叶谁裁出，二月春风似剪刀&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> SUMMER:</span><br><span class="line">            System.out.println(<span class="string">&quot;接天莲叶无穷碧，映日荷花别样红&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> AUTUMN:</span><br><span class="line">            System.out.println(<span class="string">&quot;停车坐爱枫林晚，霜叶红于二月花&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> WINTER:</span><br><span class="line">            System.out.println(<span class="string">&quot;梅花香自苦寒来，宝剑锋从磨砺出&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            System.out.println(<span class="string">&quot;垂死病中惊坐起，笑问客从何处来&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可能很多人觉得直接用int，String类型配合switch使用就够了，为什么还要支持枚举，这样的设计是不是显得很多余，其实非也。</p>
+<p>不妨反过来想，假如用1到4代表四季，接收的参数类型就是int，在没有提示的情况下，我们仅仅只知道数int类型是很难猜到需要传入数字的范围，字符串也是一样，如果不用枚举你是很难一眼看出需要传入什么参数，这才是最关键的。</p>
+<p>如果使用枚举，那么问题就迎刃而解，当你调用doSomething()方法时，一看到枚举就知道传入的是哪几个参数，因为已经在枚举类里面定义好了。<strong>这对于项目交接，还有代码的可读性都是非常有利的</strong>。</p>
+<p>这种限制不单止限制了调用方，也限制了传入的参数只能是定义好的枚举，不用担心传入的参数错误导致的程序错误。</p>
+<p>所以枚举类使用得恰当，对于项目的可维护性是有很大提升的。</p>
+<h1 id="枚举本身的方法"><a href="#枚举本身的方法" class="headerlink" title="枚举本身的方法"></a>枚举本身的方法</h1><p>首先我们先以上面的支付类型枚举PayTypeEnum为例子，看看有哪些自带的方法。</p>
+<h2 id="valueOf-方法"><a href="#valueOf-方法" class="headerlink" title="valueOf()方法"></a>valueOf()方法</h2><p>这是一个静态方法，传入一个字符串(枚举的名称)，获取枚举类。如果传入的名称不存在，则报错。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">    System.out.println(PayTypeEnum.valueOf(<span class="string">&quot;ALI_PAY&quot;</span>));</span><br><span class="line">    System.out.println(PayTypeEnum.valueOf(<span class="string">&quot;HUAWEI_PAY&quot;</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/enum_1.png"></p>
+<h2 id="values-方法"><a href="#values-方法" class="headerlink" title="values()方法"></a>values()方法</h2><p>返回包含枚举类中所有枚举数据的一个数组。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    PayTypeEnum[] payTypeEnums = PayTypeEnum.values();</span><br><span class="line">    <span class="keyword">for</span> (PayTypeEnum payTypeEnum : payTypeEnums) &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;code: &quot;</span> + payTypeEnum.getCode() + <span class="string">&quot;,describe: &quot;</span> + payTypeEnum.getDescribe());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/enum_2.png"></p>
+<h2 id="ordinal-方法"><a href="#ordinal-方法" class="headerlink" title="ordinal()方法"></a>ordinal()方法</h2><p>默认情况下，枚举类会给定义的枚举提供一个默认的次序，ordinal()方法就可以返回枚举的次序。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    PayTypeEnum[] payTypeEnums = PayTypeEnum.values();</span><br><span class="line">    <span class="keyword">for</span> (PayTypeEnum payTypeEnum : payTypeEnums) &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;ordinal: &quot;</span> + payTypeEnum.ordinal() + <span class="string">&quot;, Enum: &quot;</span> + payTypeEnum);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">ordinal: 0, Enum: ALI_PAY</span></span><br><span class="line"><span class="comment">ordinal: 1, Enum: WECHAT_PAY</span></span><br><span class="line"><span class="comment">ordinal: 2, Enum: UNION_PAY</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="name-、toString-方法"><a href="#name-、toString-方法" class="headerlink" title="name()、toString()方法"></a>name()、toString()方法</h2><p>返回定义枚举用的名称。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (Season season : Season.values()) &#123;</span><br><span class="line">        System.out.println(season.name());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (Season season : Season.values()) &#123;</span><br><span class="line">        System.out.println(season.toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果都是一样的：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">SPRING</span><br><span class="line">SUMMER</span><br><span class="line">AUTUMN</span><br><span class="line">WINTER</span><br></pre></td></tr></table></figure>
+
+<p>为什么？因为底层代码是一样，返回的是name。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Enum</span>&lt;<span class="title">E</span> <span class="keyword">extends</span> <span class="title">Enum</span>&lt;<span class="title">E</span>&gt;&gt; <span class="keyword">implements</span> <span class="title">Comparable</span>&lt;<span class="title">E</span>&gt;, <span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> String <span class="title">name</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">	</span><br></pre></td></tr></table></figure>
+
+<p>区别在于toString()方法没有被final修饰，可以重写，name()方法不能重写。</p>
+<h2 id="compareTo-方法"><a href="#compareTo-方法" class="headerlink" title="compareTo()方法"></a>compareTo()方法</h2><p>因为枚举类实现了Comparable接口，所以必须重写compareTo()方法，比较的是枚举的次序，也就是ordinal，源码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(E o)</span> </span>&#123;</span><br><span class="line">    Enum&lt;?&gt; other = (Enum&lt;?&gt;)o;</span><br><span class="line">    Enum&lt;E&gt; self = <span class="keyword">this</span>;</span><br><span class="line">    <span class="keyword">if</span> (self.getClass() != other.getClass() &amp;&amp; <span class="comment">// optimization</span></span><br><span class="line">        self.getDeclaringClass() != other.getDeclaringClass())</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ClassCastException();</span><br><span class="line">    <span class="keyword">return</span> self.ordinal - other.ordinal;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因为实现Comparable接口，所以可以用来排序，比如这样：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="comment">//这里是乱序的枚举数组</span></span><br><span class="line">    Season[] seasons = <span class="keyword">new</span> Season[]&#123;Season.WINTER, Season.AUTUMN, Season.SPRING, Season.SUMMER&#125;;</span><br><span class="line">    <span class="comment">//调用sort方法排序，按默认次序排序</span></span><br><span class="line">    Arrays.sort(seasons);</span><br><span class="line">    <span class="keyword">for</span> (Season season : seasons) &#123;</span><br><span class="line">        System.out.println(season);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果，按照默认次序排序：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">SPRING</span><br><span class="line">SUMMER</span><br><span class="line">AUTUMN</span><br><span class="line">WINTER</span><br></pre></td></tr></table></figure>
+
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>以枚举Season为例，分析一下枚举的底层。表面上看，一个枚举很简单：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">Season</span> </span>&#123;</span><br><span class="line">    <span class="comment">//春</span></span><br><span class="line">    SPRING,</span><br><span class="line">    <span class="comment">//夏</span></span><br><span class="line">    SUMMER,</span><br><span class="line">    <span class="comment">//秋</span></span><br><span class="line">    AUTUMN,</span><br><span class="line">    <span class="comment">//冬</span></span><br><span class="line">    WINTER;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实际上编译器在编译的时候做了很多动作，我们使用<code>javap -v</code>对Season.class文件反编译，可以看到很多细节。</p>
+<p>首先我们看到枚举是继承了抽象类Enum的类。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Season extends java.lang.Enum&lt;Season&gt;</span><br></pre></td></tr></table></figure>
+
+<p>第二，通过一段静态代码块初始化枚举。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> &#123;&#125;;</span><br><span class="line">  descriptor: ()V</span><br><span class="line">  flags: ACC_STATIC</span><br><span class="line">  Code:</span><br><span class="line">    stack=<span class="number">4</span>, locals=<span class="number">0</span>, args_size=<span class="number">0</span></span><br><span class="line">       <span class="number">0</span>: <span class="keyword">new</span>           #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">       <span class="number">3</span>: dup</span><br><span class="line">       <span class="number">4</span>: ldc           #<span class="number">7</span>                  <span class="comment">// String SPRING</span></span><br><span class="line">       <span class="number">6</span>: iconst_0</span><br><span class="line">       <span class="number">7</span>: invokespecial #<span class="number">8</span>                  <span class="comment">// Method &quot;&lt;init&gt;&quot;:(Ljava/lang/String;I)V</span></span><br><span class="line">      <span class="number">10</span>: putstatic     #<span class="number">9</span>                  <span class="comment">// Field SPRING:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">13</span>: <span class="keyword">new</span>           #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">      <span class="number">16</span>: dup</span><br><span class="line">      <span class="number">17</span>: ldc           #<span class="number">10</span>                 <span class="comment">// String SUMMER</span></span><br><span class="line">      <span class="number">19</span>: iconst_1</span><br><span class="line">      <span class="number">20</span>: invokespecial #<span class="number">8</span>                  <span class="comment">// Method &quot;&lt;init&gt;&quot;:(Ljava/lang/String;I)V</span></span><br><span class="line">      <span class="number">23</span>: putstatic     #<span class="number">11</span>                 <span class="comment">// Field SUMMER:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">26</span>: <span class="keyword">new</span>           #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">      <span class="number">29</span>: dup</span><br><span class="line">      <span class="number">30</span>: ldc           #<span class="number">12</span>                 <span class="comment">// String AUTUMN</span></span><br><span class="line">      <span class="number">32</span>: iconst_2</span><br><span class="line">      <span class="number">33</span>: invokespecial #<span class="number">8</span>                  <span class="comment">// Method &quot;&lt;init&gt;&quot;:(Ljava/lang/String;I)V</span></span><br><span class="line">      <span class="number">36</span>: putstatic     #<span class="number">13</span>                 <span class="comment">// Field AUTUMN:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">39</span>: <span class="keyword">new</span>           #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">      <span class="number">42</span>: dup</span><br><span class="line">      <span class="number">43</span>: ldc           #<span class="number">14</span>                 <span class="comment">// String WINTER</span></span><br><span class="line">      <span class="number">45</span>: iconst_3</span><br><span class="line">      <span class="number">46</span>: invokespecial #<span class="number">8</span>                  <span class="comment">// Method &quot;&lt;init&gt;&quot;:(Ljava/lang/String;I)V</span></span><br><span class="line">      <span class="number">49</span>: putstatic     #<span class="number">15</span>                 <span class="comment">// Field WINTER:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">52</span>: iconst_4</span><br><span class="line">      <span class="number">53</span>: anewarray     #<span class="number">4</span>                  <span class="comment">// class io/github/yehongzhi/user/redisLock/Season</span></span><br><span class="line">      <span class="number">56</span>: dup</span><br><span class="line">      <span class="number">57</span>: iconst_0</span><br><span class="line">      <span class="number">58</span>: getstatic     #<span class="number">9</span>                  <span class="comment">// Field SPRING:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">61</span>: aastore</span><br><span class="line">      <span class="number">62</span>: dup</span><br><span class="line">      <span class="number">63</span>: iconst_1</span><br><span class="line">      <span class="number">64</span>: getstatic     #<span class="number">11</span>                 <span class="comment">// Field SUMMER:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">67</span>: aastore</span><br><span class="line">      <span class="number">68</span>: dup</span><br><span class="line">      <span class="number">69</span>: iconst_2</span><br><span class="line">      <span class="number">70</span>: getstatic     #<span class="number">13</span>                 <span class="comment">// Field AUTUMN:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">73</span>: aastore</span><br><span class="line">      <span class="number">74</span>: dup</span><br><span class="line">      <span class="number">75</span>: iconst_3</span><br><span class="line">      <span class="number">76</span>: getstatic     #<span class="number">15</span>                 <span class="comment">// Field WINTER:Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">79</span>: aastore</span><br><span class="line">      <span class="number">80</span>: putstatic     #<span class="number">1</span>                  <span class="comment">// Field $VALUES:[Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">      <span class="number">83</span>: <span class="keyword">return</span></span><br></pre></td></tr></table></figure>
+
+<p>这段静态代码块的作用就是生成四个静态常量字段的值，还生成了$VALUES字段，用于保存枚举类定义的枚举常量。相当于执行了以下代码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Season SPRING = <span class="keyword">new</span> Season1();</span><br><span class="line">Season SUMMER = <span class="keyword">new</span> Season2();</span><br><span class="line">Season AUTUMN = <span class="keyword">new</span> Season3();</span><br><span class="line">Season WINTER = <span class="keyword">new</span> Season4();</span><br><span class="line">Season[] $VALUES = <span class="keyword">new</span> Season[<span class="number">4</span>];</span><br><span class="line">$VALUES[<span class="number">0</span>] = SPRING;</span><br><span class="line">$VALUES[<span class="number">1</span>] = SUMMER;</span><br><span class="line">$VALUES[<span class="number">2</span>] = AUTUMN;</span><br><span class="line">$VALUES[<span class="number">3</span>] = WINTER;</span><br></pre></td></tr></table></figure>
+
+<p>第三个，关于values()方法，这是一个静态方法，作用是返回该枚举类的数组，底层实现原理，其实是这样的。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> io.github.yehongzhi.user.redisLock.Season[] values();</span><br><span class="line">    Code:</span><br><span class="line">       <span class="number">0</span>: getstatic     #<span class="number">1</span>                  <span class="comment">// Field $VALUES:[Lio/github/yehongzhi/user/redisLock/Season;</span></span><br><span class="line">       <span class="number">3</span>: invokevirtual #<span class="number">2</span>                  <span class="comment">// Method &quot;[Lio/github/yehongzhi/user/redisLock/Season;&quot;.clone:()Ljava/lang/Object;</span></span><br><span class="line">       <span class="number">6</span>: checkcast     #<span class="number">3</span>                  <span class="comment">// class &quot;[Lio/github/yehongzhi/user/redisLock/Season;&quot;</span></span><br><span class="line">       <span class="number">9</span>: areturn</span><br></pre></td></tr></table></figure>
+
+<p>其实是将静态代码块初始化的$VALUES数组克隆一份，然后强转成Season[]返回。相当于这样：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> Season[] values()&#123;</span><br><span class="line">	<span class="keyword">return</span> (Season[])$VALUES.clone();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以表面上，只是加了一个enum关键字定义枚举，但是底层一旦确认是枚举类，则会由编译器对枚举类进行特殊处理，通过静态代码块初始化枚举，只要是枚举就一定会提供values()方法。</p>
+<p>通过反编译我们也知道所有的枚举父类都是抽象类Enum，所以Enum有的成员变量，实现的接口，子类也会有。</p>
+<p>所以只要是枚举都会有name，ordinal这两个字段，并且我们看Enum的构造器。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Sole constructor.  Programmers cannot invoke this constructor.</span></span><br><span class="line"><span class="comment">* It is for use by code emitted by the compiler in response to</span></span><br><span class="line"><span class="comment">* enum type declarations.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="title">Enum</span><span class="params">(String name, <span class="keyword">int</span> ordinal)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.name = name;</span><br><span class="line">    <span class="keyword">this</span>.ordinal = ordinal;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>翻译一下上面那段英文，意思大概是：唯一的构造器，程序员没法调用此构造器，它是供编译器响应枚举类型声明而使用的。得出结论，枚举实例的创建也是由编译器完成的。</p>
+<h1 id="枚举实现单例"><a href="#枚举实现单例" class="headerlink" title="枚举实现单例"></a>枚举实现单例</h1><p>很多人都说，枚举类是最好的实现单例的一种方式，因为枚举类的单例是线程安全，并且是唯一一种不会被破坏的单例模式实现。也就是不能通过反射的方式创建实例，保证了整个应用中只有一个实例，非常硬核的单例。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SingletonObj</span> </span>&#123;</span><br><span class="line">    <span class="comment">//内部类使用枚举</span></span><br><span class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">enum</span> <span class="title">SingletonEnum</span> </span>&#123;</span><br><span class="line">        INSTANCE;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">private</span> SingletonObj singletonObj;</span><br><span class="line">		<span class="comment">//在枚举类的构造器里初始化singletonObj</span></span><br><span class="line">        SingletonEnum() &#123;</span><br><span class="line">            singletonObj = <span class="keyword">new</span> SingletonObj();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">private</span> SingletonObj <span class="title">getSingletonObj</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> singletonObj;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//对外部提供的获取单例的方法</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> SingletonObj <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//获取单例对象，返回</span></span><br><span class="line">        <span class="keyword">return</span> SingletonEnum.INSTANCE.getSingletonObj();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//测试</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        SingletonObj a = SingletonObj.getInstance();</span><br><span class="line">        SingletonObj b = SingletonObj.getInstance();</span><br><span class="line">        System.out.println(a == b);<span class="comment">//true</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>假如有人想通过反射创建枚举类呢，我们以Season枚举为例。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    Constructor&lt;Season&gt; constructor = Season.class.getDeclaredConstructor(String.class, <span class="keyword">int</span>.class);</span><br><span class="line">    constructor.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">    <span class="comment">//通过反射调用构造器，创建枚举</span></span><br><span class="line">    Season season = constructor.newInstance(<span class="string">&quot;NEW_SPRING&quot;</span>, <span class="number">4</span>);</span><br><span class="line">    System.out.println(season);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后就会报错，因为不允许对枚举的构造器使用反射调用。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/enum_3.png"></p>
+<p>查看源码，就可以看到，有个专门针对枚举的<code>if</code>判断。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> T <span class="title">newInstance</span><span class="params">(Object ... initargs)</span> <span class="keyword">throws</span> InstantiationException, IllegalAccessException,IllegalArgumentException, InvocationTargetException </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!override) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!Reflection.quickCheckMemberAccess(clazz, modifiers)) &#123;</span><br><span class="line">            Class&lt;?&gt; caller = Reflection.getCallerClass();</span><br><span class="line">            checkAccess(caller, clazz, <span class="keyword">null</span>, modifiers);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//判断是否是枚举，如果是枚举的话，报、抛出异常</span></span><br><span class="line">    <span class="keyword">if</span> ((clazz.getModifiers() &amp; Modifier.ENUM) != <span class="number">0</span>)</span><br><span class="line">        <span class="comment">//抛出异常，不能通过反射创建枚举</span></span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">&quot;Cannot reflectively create enum objects&quot;</span>);</span><br><span class="line">    ConstructorAccessor ca = constructorAccessor;   <span class="comment">// read volatile</span></span><br><span class="line">    <span class="keyword">if</span> (ca == <span class="keyword">null</span>) &#123;</span><br><span class="line">        ca = acquireConstructorAccessor();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@SuppressWarnings(&quot;unchecked&quot;)</span></span><br><span class="line">    T inst = (T) ca.newInstance(initargs);</span><br><span class="line">    <span class="keyword">return</span> inst;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>枚举看起来好像是很小一部分的知识，其实深入挖掘的话，我们会发现还是有很多地方值得学习的。第一点使用枚举定义常量更容易扩展，而且代码可读性更强，维护性更好。接着第二点是需要了解枚举自带的方法。第三点通过反编译，探索编译器在编译阶段为枚举做了什么事情。最后再讲一下枚举实现单例模式的例子。</p>
+<p>这篇文章讲到这里了，感谢大家的阅读，希望看完这篇文章能有所收获！</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>Java 基础</category>
+      </categories>
+      <tags>
+        <tag>枚举</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java 性能调优实战</title>
+    <url>/2021/09/24/learning-summary/Java%E8%BF%9B%E9%98%B6/Java%20%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E5%AE%9E%E6%88%98/</url>
+    <content><![CDATA[<p>Java 性能调优实战</p>
+<h2 id="开篇"><a href="#开篇" class="headerlink" title="开篇"></a>开篇</h2><h3 id="怎样才能做好性能调优？"><a href="#怎样才能做好性能调优？" class="headerlink" title="怎样才能做好性能调优？"></a>怎样才能做好性能调优？</h3><p>技术广度：一个系统囊括了应用程序、数据库、容器、操作系统、网络等技术，线上一旦出现性能问题，就可能要你协调多方面组件去进行优化。</p>
+<p>技术深度：而很多性能问题呢，又隐藏得很深，可能因为一个小小的代码，也可能因为线程池的类型选择错<br>误…可归根结底考验的还是我们对这项技术的了解程度。</p>
+<h4 id="扎实的计算机基础"><a href="#扎实的计算机基础" class="headerlink" title="扎实的计算机基础"></a>扎实的计算机基础</h4><p>计算机组成原理、操作系统、网络协议以及数据库、数据结构、算法以及数学</p>
+<h4 id="习惯透过源码了解技术本质"><a href="#习惯透过源码了解技术本质" class="headerlink" title="习惯透过源码了解技术本质"></a>习惯透过源码了解技术本质</h4><p>深入源码分析总结一项技术的实现原理和优缺点</p>
+<h4 id="善于追问和总结"><a href="#善于追问和总结" class="headerlink" title="善于追问和总结"></a>善于追问和总结</h4><p>知其然且知所以然</p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><h3 id="如何制定性能调优标准？"><a href="#如何制定性能调优标准？" class="headerlink" title="如何制定性能调优标准？"></a>如何制定性能调优标准？</h3><p>我们为什么要做性能调优？什么时候开始做？做性能调优是不是有标准可参考？</p>
+<h4 id="为什么要做性能调优？"><a href="#为什么要做性能调优？" class="headerlink" title="为什么要做性能调优？"></a>为什么要做性能调优？</h4><p>线上产品如果没有经过性能测试，就好比是一颗定时炸弹，你不知道它什么时候会出现问题，你也不清楚它能承受的极限在哪儿。</p>
+<p>有些性能问题是时间累积慢慢产生的，到了一定时间自然就爆炸了；<br>更多的性能问题是由访问量的波动导致的；</p>
+<p>好的系统性能调优不仅仅可以提高系统的性能，还能为公司节省资源；</p>
+<h4 id="什么时候开始介入调优？"><a href="#什么时候开始介入调优？" class="headerlink" title="什么时候开始介入调优？"></a>什么时候开始介入调优？</h4><p>系统编码完成之后对系统进行性能测试。根据线上预期数据，进行压测，通过性能分析、统计工具来统计各项性能指标，看是否在预期范围之内。</p>
+<p>上线后，根据线上的实际情况，依照日志监控以及性能统计日志，来观测系统性能问题，一旦发现问题，就要对日志进行分析并及时修复问题。</p>
+<h4 id="有哪些参考因素可以体现系统的性能？"><a href="#有哪些参考因素可以体现系统的性能？" class="headerlink" title="有哪些参考因素可以体现系统的性能？"></a>有哪些参考因素可以体现系统的性能？</h4><ul>
+<li>CPU：有的应用需要大量计算，他们会长时间、不间断地占用 CPU 资源，导致其他资源无法争夺到 CPU 而响应缓慢，从而带来系统性能问题。例如，代码递归导致的无限循环，正则表达式引起的回溯，JVM 频繁的 FULL GC，以及多线程编程造成的大量上下文切换等，这些都有可能导致 CPU 资源繁忙。</li>
+<li>内存：Java 程序一般通过 JVM 对内存进行分配管理，主要是用 JVM 中的堆内存来存储 Java 创建的对象。系统堆内存的读写速度非常快，所以基本不存在读写性能瓶颈。但是由于内存成本要比磁盘高，相比磁盘，内存的存储空间又非常有限。所以当内存空间被占满，对象无法回收时，就会导致内存溢出、内存泄露等问题。</li>
+<li>磁盘 I/O：磁盘相比内存来说，存储空间要大很多，但磁盘 I/O 读写的速度要比内存慢，虽然目前引入的 SSD 固态硬盘已经有所优化，但仍然无法与内存的读写速度相提并论。</li>
+<li>网络：网络对于系统性能来说，也起着至关重要的作用。如果你购买过云服务，一定经历过，选择网络带宽大小这一环节。带宽过低的话，对于传输数据比较大，或者是并发量比较大的系统，网络就很容易成为性能瓶颈。</li>
+<li>异常：Java 应用中，抛出异常需要构建异常栈，对异常进行捕获和处理，这个过程非常消耗系统性能。如果在高并发的情况下引发异常，持续地进行异常处理，那么系统的性能就会明显地受到影响。</li>
+<li>数据库：大部分系统都会用到数据库，而数据库的操作往往是涉及到磁盘 I/O 的读写。大量的数据库读写操作，会导致磁盘 I/O 性能瓶颈，进而导致数据库操作的延迟性。对于有大量数据库读写操作的系统来说，数据库的性能优化是整个系统的核心。</li>
+<li>锁竞争：在并发编程中，我们经常会需要多个线程，共享读写操作同一个资源，这个时候为了保持数据的原子性（即保证这个共享资源在一个线程写的时候，不被另一个线程修改），我们就会用到锁。锁的使用可能会带来上下文切换，从而给系统带来性能开销。JDK1.6 之后，Java 为了降低锁竞争带来的上下文切换，对 JVM 内部锁已经做了多次优化，例如，新增了偏向锁、自旋锁、轻量级锁、锁粗化、锁消除等。而如何合理地使用锁资源，优化锁资源，就需要你了解更多的操作系统知识、Java 多线程编程基础，积累项目经验，并结合实际场景去处理相关问题。</li>
+</ul>
+<h4 id="下面几个指标，来衡量一般系统的性能。"><a href="#下面几个指标，来衡量一般系统的性能。" class="headerlink" title="下面几个指标，来衡量一般系统的性能。"></a>下面几个指标，来衡量一般系统的性能。</h4><p><strong>响应时间</strong></p>
+<ul>
+<li>数据库响应时间：数据库操作所消耗的时间，往往是整个请求链中最耗时的；</li>
+<li>服务端响应时间：服务端包括 Nginx 分发的请求所消耗的时间以及服务端程序执行所消耗的时间；</li>
+<li>网络响应时间：这是网络传输时，网络硬件需要对传输的请求进行解析等操作所消耗的时间；</li>
+<li>客户端响应时间：对于普通的 Web、App 客户端来说，消耗时间是可以忽略不计的，但如果你的客户端嵌入了大量的逻辑处理，消耗的时间就有可能变长，从而成为系统的瓶颈。</li>
+</ul>
+<p><strong>吞吐量</strong>：磁盘吞吐量、网络吞吐量</p>
+<ul>
+<li><p>磁盘吞吐量：IOPS、数据吞吐量</p>
+<ul>
+<li>IOPS（Input/Output Per Second）每秒的输入输出量（或读写次数）</li>
+<li>数据吞吐量：单位时间内可以成功传输的数据量</li>
+</ul>
+</li>
+<li><p>网络吞吐量：网络传输时没有帧丢失的情况下，设备能够接受的最大数据<br>速率。</p>
+</li>
+</ul>
+<p><strong>计算机资源分配使用率</strong></p>
+<p>CPU 占用率、内存使用率、磁盘 I/O、网络 I/O 来表示资源使用率</p>
+<p><strong>负载承受能力</strong></p>
+<p>当系统压力上升时，系统响应时间的上升曲线是否平缓。这项指标能直观地反映系统所能承受的负载压力极限。</p>
+<h3 id="如何制定性能调优策略？"><a href="#如何制定性能调优策略？" class="headerlink" title="如何制定性能调优策略？"></a>如何制定性能调优策略？</h3><p>测试 - 分析 - 调优</p>
+<h4 id="性能测试攻略"><a href="#性能测试攻略" class="headerlink" title="性能测试攻略"></a>性能测试攻略</h4><ol>
+<li><p>微基准性能测试</p>
+<p>微基准性能测试可以精准定位到某个模块或者某个方法的性能问题，特别适合做一个功能模块或者一个方法在不同实现方式下的性能对比。例如，对比一个方法使用同步实现和非同步实现的性能。</p>
+</li>
+<li><p>宏基准性能测试</p>
+<p>宏基准性能测试是一个综合测试，需要考虑到测试环境、测试场景和测试目标。需要模拟线上的真实环境。测试场景，是否有其他业务接口同时也在平行运行，造成干扰。性能测试是要有目标的，这里可以通过吞吐量以及响应时间来衡量系统是否达标。</p>
+</li>
+</ol>
+<p>性能测试存在干扰因子，会使测试结果不准确。</p>
+<ol>
+<li><p>热身问题</p>
+<p>解释器将字节码转换成本地机器码，随着代码被执行的次数增多，虚拟机会把运行特别频繁的方法或代码块认定为热点代码（Hot Spot Code），优化后存储在内存中。</p>
+</li>
+<li><p>性能测试结果不稳定</p>
+<p>机器其他进程的影响、网络波动以及每个阶段 JVM 垃圾回收的不同，可以通过多次测试，将测试结果求平均。</p>
+</li>
+<li><p>多 JVM 情况下的影响</p>
+<p>服务器有多个 Java 应用服务，任意一个 JVM 都拥有整个系统的资源使用权。尽量避免线上环境中一台机器部署多个 JVM 的情况。</p>
+</li>
+</ol>
+<h4 id="合理分析结果，制定调优策略"><a href="#合理分析结果，制定调优策略" class="headerlink" title="合理分析结果，制定调优策略"></a>合理分析结果，制定调优策略</h4><p>性能测试报告需要包含测试接口的平均、最大和最小吞吐量，响应时间，服务器的 CPU、内存、I/O、网络 IO 使用率，JVM 的 GC 频率等。</p>
+<p>先从操作系统层面，查看系统的 CPU、内存、I/O、网络的使用率是否存在异常，再通过命令查找异常日志，最后通过分析日志，找到导致瓶颈的原因；还可以从 Java 应用的 JVM 层面，查看 JVM 的垃圾回收频率以及内存分配情况是否存在异常，分析日志，找到导致瓶颈的原因。</p>
+<p>如果系统和 JVM 层面都没有出现异常情况，我们可以查看应用服务业务层是否存在性能瓶颈，例如 Java 编程的问题、读写数据瓶颈等等。</p>
+<p>分析查找问题可以采用自下而上的方式，而我们解决系统性能问题，则可以采用自上而下的方式逐级优化。下面介绍从应用层到操作系统层的几种调优策略。</p>
+<ol>
+<li><p>优化代码</p>
+<p>应用层的问题代码往往会因为耗尽系统资源而暴露出来。代码导致内存溢出，将 JVM 中的内存用完了，这个时候系统的内存资源消耗殆尽了，同时也会引发 JVM 频繁地发生垃圾回收，导致 CPU 100% 以上居高不下，这个时候又消耗了系统的 CPU 资源。</p>
+<p>非问题代码导致的性能问题，LinkedList 集合，如果使用 for 循环遍历该容器将大大降低读的效率。改用 Iterator （迭代器）迭代循环该集合。</p>
+</li>
+<li><p>优化设计</p>
+<p>面向对象有很多设计模式，可以帮助我们优化业务层以及中间件层的代码设计。可以精简代码，还能提高整体性能。例如，单例模式在频繁调用创建对象的场景中，可以共享一个创建对象，减少频繁地创建和销毁对象所带来的性能消耗。</p>
+</li>
+<li><p>优化算法</p>
+<p>好的算法可以帮助我们大大地提升系统性能。例如，在不同的场景中，使用合适的查找算法可以降低时间复杂度。</p>
+</li>
+<li><p>时间换空间</p>
+<p>有时候系统对查询时的速度并没有很高的要求，反而对存储空间要求苛刻，这个时候我们可以考虑用时间来换取空间。</p>
+</li>
+<li><p>空间换时间</p>
+<p>这种方法是使用存储空间来提升访问速度。现在很多系统都是使用的 MySQL 数据库，较为常见的分表分库是典型的使用空间换时间的案例。</p>
+</li>
+<li><p>参数调优</p>
+<p>JVM、Web 容器以及操作系统的优化也是非常关键的。</p>
+<p>根据业务场景，合理地设置 JVM 的内存空间以及垃圾回收算法可以提升系统性能。例如，业务中会创建大量的大对象，可以通过设置，将这些大对象直接放进老年代。这样可以减少年轻代频繁发生小的垃圾回收（Minor GC），减少 CPU 占用时间，提升系统性能。</p>
+<p>Web 容器线程池的设置以及 Linux 操作系统的内核参数设置不合理也有可能导致系统性能瓶颈，根据业务场景优化这两部分，可以提升系统性能。</p>
+</li>
+<li><p>兜底策略</p>
+<p>限流，对系统的入口设置最大访问限制。同时采取熔断措施，友好地返回没有成功的请求。</p>
+<p>实现智能化横向扩容。智能化横向扩容可以保证当访问量超过某一个阈值时，系统可以根据需求自动横向新增服务。</p>
+<p>提前扩容。这种方法通常应用于高并发系统，例如，瞬时抢购业务系统。这是因为横向扩容无法满足大量发生在瞬间的请求，即使成功了，抢购也结束了。</p>
+<p> Kubernetes 可以实现智能化横向扩容和提前扩容 Docker 服务。</p>
+</li>
+</ol>
+<h2 id="Java-编程性能调优"><a href="#Java-编程性能调优" class="headerlink" title="Java 编程性能调优"></a>Java 编程性能调优</h2><h3 id="字符串性能优化"><a href="#字符串性能优化" class="headerlink" title="字符串性能优化"></a>字符串性能优化</h3><h3 id="慎重使用正则表达式"><a href="#慎重使用正则表达式" class="headerlink" title="慎重使用正则表达式"></a>慎重使用正则表达式</h3><h3 id="ArrayList-还是-LinkedList？使用不当性能差千倍"><a href="#ArrayList-还是-LinkedList？使用不当性能差千倍" class="headerlink" title="ArrayList 还是 LinkedList？使用不当性能差千倍"></a>ArrayList 还是 LinkedList？使用不当性能差千倍</h3><h3 id="Stream如何提高遍历集合的效率"><a href="#Stream如何提高遍历集合的效率" class="headerlink" title="Stream如何提高遍历集合的效率"></a>Stream如何提高遍历集合的效率</h3><p> Stream 中的操作分为两大类：中间操作（Intermediate operations）和终结操作（Terminal operations）。中间操作只对操作进行了记录，即只会返回一个流，不会进行计算操作，而终结操作是实现了计算操作。</p>
+<p>中间操作又可以分为无状态（Stateless）与有状态（Stateful）操作，前者是指元素的处理不受之前元素的影响，后者是指该操作只有拿到所有元素之后才能继续下去。</p>
+<p>终结操作又可以分为短路（Short-circuiting）与非短路（Unshort-circuiting）操作，前者是指遇到某些符合条件的元素就可以得到最终结果，后者是指必须处理完所有元素才能得到最终结果。</p>
+<p><img src="D:\workspace\gitee\cdn\java\stream1.png" alt="输入图片说明"></p>
+<p>我们通常还会将中间操作称为懒操作，也正是由这种懒操作结合终结操作、数据源构成的处理管道（Pipeline），实现了 Stream 的高效。</p>
+<p>Stream 处理数据的方式有两种，串行处理和并行处理。要实现并行处理，我们只需要在例子的代码中新增一个 Parallel() 方法。</p>
+<p>在并行处理操作中，Stream 对中间操作基本跟串行处理方式是一样的，但在终结操作中，Stream 将结合 ForkJoin 框架对集合进行切片处理，ForkJoin 框架将每个切片的处理结果 Join 合并起来。</p>
+<h3 id="深入浅出-HashMap-的设计与优化"><a href="#深入浅出-HashMap-的设计与优化" class="headerlink" title="深入浅出 HashMap 的设计与优化"></a>深入浅出 HashMap 的设计与优化</h3><h4 id="常用的数据结构"><a href="#常用的数据结构" class="headerlink" title="常用的数据结构"></a>常用的数据结构</h4><p><strong>数组</strong>：采用一段连续的存储单元来存储数据。对于指定下标的查找，时间复杂度为 O(1)，但在数组中间以及头部插入数据时，需要复制移动后面的元素。</p>
+<p><strong>链表</strong>：一种在物理存储单元上非连续、非顺序的存储结构，数据元素的逻辑顺序是通过链表中的指针链接次序实现的。</p>
+<p>链表由一系列结点（链表中每一个元素）组成，结点可以在运行时动态生成。每个结点都包含“存储数据单元的数据域”和“存储下一个结点地址的指针域”这两个部分。</p>
+<p>由于链表不用必须按顺序存储，所以链表在插入的时候可以达到 O(1) 的复杂度，但查找一个结点或者访问特定编号的结点需要 O(n) 的时间。</p>
+<p><strong>哈希表</strong>：根据关键码值（Key value）直接进行访问的数据结构。通过把关键码值映射到表中一个位置来访问记录，以加快查找的速度。这个映射函数叫做哈希函数，存放记录的数组就叫做哈希表。</p>
+<p><strong>树</strong>：由 n（n≥1）个有限结点组成的一个具有层次关系的集合，就像是一棵倒挂的树。</p>
+<h4 id="HashMap-的实现结构"><a href="#HashMap-的实现结构" class="headerlink" title="HashMap 的实现结构"></a>HashMap 的实现结构</h4><p>作为最常用的 Map 类，它是基于哈希表实现的，继承了 AbstractMap 并且实现了 Map 接口。</p>
+<p>哈希表将键的 Hash 值映射到内存地址，即根据键获取对应的值，并将其存储到内存地址。也就是说 HashMap 是根据键的 Hash 值来决定对应值的存储位置。通过这种索引方式，HashMap 获取数据的速度会非常快。</p>
+<p>哈希表是怎么解决的呢？开放定址法、再哈希函数法和链地址法。</p>
+<p>开放定址法很简单，当发生哈希冲突时，如果哈希表未被装满，说明在哈希表中必然还有空位置，那么可以把 key 存放到冲突位置的空位置上去。这种方法存在着很多缺点，例如，查找、扩容等，所以我不建议你作为解决哈希冲突的首选。</p>
+<p>再哈希法顾名思义就是在同义词产生地址冲突时再计算另一个哈希函数地址，直到冲突不再发生，这种方法不易产生“聚集”，但却增加了计算时间。如果我们不考虑添加元素的时间成本，且对查询元素的要求极高，就可以考虑使用这种算法设计。</p>
+<p>HashMap 则是综合考虑了所有因素，采用链地址法解决哈希冲突问题。这种方法是采用了数组（哈希表）+ 链表的数据结构，当发生哈希冲突时，就用一个链表结构存储相同 Hash 值的数据。</p>
+<h4 id="HashMap-的重要属性"><a href="#HashMap-的重要属性" class="headerlink" title="HashMap 的重要属性"></a>HashMap 的重要属性</h4><p>从 HashMap 的源码中，我们可以发现，HashMap 是由一个 Node 数组构成，每个 Node 包含了一个 key-value 键值对。</p>
+<p>Node 类作为 HashMap 中的一个内部类，除了 key、value 两个属性外，还定义了一个 next 指针。当有哈希冲突时，HashMap 会用之前数组当中相同哈希值对应存储的 Node 对象，通过指针指向新增的相同哈希值的 Node 对象的引用。</p>
+<p>HashMap 还有两个重要的属性：加载因子（loadFactor）和边界值（threshold）。在初始化 HashMap 时，就会涉及到这两个关键初始化参数。</p>
+<p>LoadFactor 属性是用来间接设置 Entry 数组（哈希表）的内存空间大小，在初始 HashMap 不设置参数的情况下，默认 LoadFactor 值为 0.75。为什么是 0.75 这个值呢？</p>
+<p>这是因为对于使用链表法的哈希表来说，查找一个元素的平均时间是 O(1+n)，这里的 n 指的是遍历链表的长度，因此加载因子越大，对空间的利用就越充分，这就意味着链表的长度越长，查找效率也就越低。如果设置的加载因子太小，那么哈希表的数据将过于稀疏，对空间造成严重浪费。</p>
+<h3 id="网络通信优化之IO模型：如何解决高并发下IO瓶颈？"><a href="#网络通信优化之IO模型：如何解决高并发下IO瓶颈？" class="headerlink" title="网络通信优化之IO模型：如何解决高并发下IO瓶颈？"></a>网络通信优化之IO模型：如何解决高并发下IO瓶颈？</h3><h3 id="网络通信优化之序列化：避免使用-Java-序列化"><a href="#网络通信优化之序列化：避免使用-Java-序列化" class="headerlink" title="网络通信优化之序列化：避免使用 Java 序列化"></a>网络通信优化之序列化：避免使用 Java 序列化</h3><h3 id="网络通信优化之通信协议：如何优化RPC网络通信？"><a href="#网络通信优化之通信协议：如何优化RPC网络通信？" class="headerlink" title="网络通信优化之通信协议：如何优化RPC网络通信？"></a>网络通信优化之通信协议：如何优化RPC网络通信？</h3><h3 id="深入了解NIO的优化实现原理"><a href="#深入了解NIO的优化实现原理" class="headerlink" title="深入了解NIO的优化实现原理"></a>深入了解NIO的优化实现原理</h3><h3 id="性能测试工具"><a href="#性能测试工具" class="headerlink" title="性能测试工具"></a>性能测试工具</h3><h2 id="多行程性能调优"><a href="#多行程性能调优" class="headerlink" title="多行程性能调优"></a>多行程性能调优</h2><h3 id="深入了解-Synchronized-同步锁的优化方法"><a href="#深入了解-Synchronized-同步锁的优化方法" class="headerlink" title="深入了解 Synchronized 同步锁的优化方法"></a>深入了解 Synchronized 同步锁的优化方法</h3><p>在并发编程中，多个线程访问同一个共享资源时，我们必须考虑如何维护数据的原子性。在 JDK1.5 之前，Java 是依靠 Synchronized 关键字实现锁功能来做到这点的。Synchronized 是 JVM 实现的一种内置锁，锁的获取和释放是由 JVM 隐式实现。</p>
+<p>到了 JDK1.5 版本，并发包中新增了 Lock 接口来实现锁功能，它提供了与 Synchronized 关键字类似的同步功能，只是在使用时需要显示获取和释放锁。</p>
+<p>Lock 同步锁是基于 Java 实现的，而 Synchronized 是基于底层操作系统的 Mutex Lock 实现的，每次获取和释放锁操作都会带来用户态和内核态的切换，从而增加系统性能开销。</p>
+<p>在锁竞争激烈的情况下，Synchronized 同步锁在性能上就表现得非常糟糕，它也常被大家称为重量级锁。</p>
+<p>JDK1.6 版本之后，Java 对 Synchronized 同步锁做了充分的优化，甚至在某些场景下，它的性能已经超越了 Lock 同步锁。我们来看看 Synchronized 同步锁究竟是通过了哪些优化，实现了性能地提升。</p>
+<h4 id="Synchronized-同步锁实现原理"><a href="#Synchronized-同步锁实现原理" class="headerlink" title="Synchronized 同步锁实现原理"></a>Synchronized 同步锁实现原理</h4><p>通常 Synchronized 实现同步锁的方式有两种，一种是修饰方法，一种是修饰方法块。以下就是通过 Synchronized 实现的两种同步方法加锁的方式：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 关键字在实例方法上，锁为当前实例</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">method1</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// code</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 关键字在代码块上，锁为括号里面的对象</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Object o = <span class="keyword">new</span> Object();</span><br><span class="line">    <span class="keyword">synchronized</span> (o) &#123;</span><br><span class="line">        <span class="comment">// code</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>我们可以通过反编译看下具体字节码的实现，运行以下反编译命令，就可以输出我们想要的字节码：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">javac -encoding UTF-8 SyncTest.java  // 先运行编译 class 文件命令</span><br><span class="line"></span><br><span class="line">javap -v SyncTest.class // 再通过 javap 打印出字节文件</span><br></pre></td></tr></table></figure>
+
+<p>通过输出的字节码，你会发现：Synchronized 在修饰同步代码块时，是由 monitorenter 和 monitorexit 指令来实现同步的。进入 monitorenter 指令后，线程将持有 Monitor 对象，退出 monitorenter 指令后，线程将释放该 Monitor 对象。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public void method2();</span><br><span class="line">    descriptor: ()V</span><br><span class="line">    flags: ACC_PUBLIC</span><br><span class="line">    Code:</span><br><span class="line">      stack=2, locals=4, args_size=1</span><br><span class="line">         0: new           #2                  </span><br><span class="line">         3: dup</span><br><span class="line">         4: invokespecial #1                  </span><br><span class="line">         7: astore_1</span><br><span class="line">         8: aload_1</span><br><span class="line">         9: dup</span><br><span class="line">        10: astore_2</span><br><span class="line">        11: monitorenter //monitorenter 指令</span><br><span class="line">        12: aload_2</span><br><span class="line">        13: monitorexit  //monitorexit  指令</span><br><span class="line">        14: goto          22</span><br><span class="line">        17: astore_3</span><br><span class="line">        18: aload_2</span><br><span class="line">        19: monitorexit</span><br><span class="line">        20: aload_3</span><br><span class="line">        21: athrow</span><br><span class="line">        22: return</span><br><span class="line">      Exception table:</span><br><span class="line">         from    to  target type</span><br><span class="line">            12    14    17   any</span><br><span class="line">            17    20    17   any</span><br><span class="line">      LineNumberTable:</span><br><span class="line">        line 18: 0</span><br><span class="line">        line 19: 8</span><br><span class="line">        line 21: 12</span><br><span class="line">        line 22: 22</span><br><span class="line">      </span><br><span class="line">      StackMapTable: number_of_entries = 2</span><br><span class="line">        frame_type = 255 /* full_frame */</span><br><span class="line">          offset_delta = 17</span><br><span class="line">          locals = [ class com/demo/io/SyncTest, class java/lang/Object, class java/lang</span><br><span class="line">          stack = [ class java/lang/Throwable ]</span><br><span class="line">        frame_type = 250 /* chop */</span><br><span class="line">		offset_delta = 4</span><br></pre></td></tr></table></figure>
+
+
+
+<p>再看以下同步方法的字节码，当 Synchronized 修饰同步方法时，并没有发现 monitorenter 和 monitorexit 指令，而是出现了一个 ACC_SYNCHRONIZED 标志。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public synchronized void method1();</span><br><span class="line">   descriptor: ()V</span><br><span class="line">   flags: ACC_PUBLIC, ACC_SYNCHRONIZED // ACC_SYNCHRONIZED 标志</span><br><span class="line">   Code:</span><br><span class="line">     stack=0, locals=1, args_size=1</span><br><span class="line">        0: return</span><br><span class="line">     LineNumberTable:</span><br><span class="line">       line 8: 0</span><br></pre></td></tr></table></figure>
+
+<p>这是因为 JVM 使用了 ACC_SYNCHRONIZED 访问标志来区分一个方法是否是同步方法。当方法调用时，调用指令将会检查该方法是否被设置 ACC_SYNCHRONIZED 访问标志。如果设置了该标志，执行线程将先持有 Monitor 对象，然后再执行方法。在该方法运行期间，其它线程将无法获取到该 Mointor 对象，当方法执行完成后，再释放该 Monitor 对象。</p>
+<p> Synchronized 修饰方法是怎么实现锁原理的。</p>
+<p>JVM 中的同步是基于进入和退出管程（Monitor）对象实现的。每个对象实例都会有一个 Monitor，Monitor 可以和对象一起创建、销毁。Monitor 是由 ObjectMonitor 实现，而 ObjectMonitor 是由 C++ 的 ObjectMonitor.hpp 文件实现，如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ObjectMonitor() &#123;</span><br><span class="line">   _header = NULL;</span><br><span class="line">   _count = 0; // 记录个数</span><br><span class="line">   _waiters = 0,</span><br><span class="line">   _recursions = 0;</span><br><span class="line">   _object = NULL;</span><br><span class="line">   _owner = NULL;</span><br><span class="line">   _WaitSet = NULL; // 处于 wait 状态的线程，会被加入到 _WaitSet</span><br><span class="line">   _WaitSetLock = 0 ;</span><br><span class="line">   _Responsible = NULL ;</span><br><span class="line">   _succ = NULL ;</span><br><span class="line">   _cxq = NULL ;</span><br><span class="line">   FreeNext = NULL ;</span><br><span class="line">   _EntryList = NULL ; // 处于等待锁 block 状态的线程，会被加入到该列表</span><br><span class="line">   _SpinFreq = 0 ;</span><br><span class="line">   _SpinClock = 0 ;</span><br><span class="line">   OwnerIsThread = 0 ;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当多个线程同时访问一段同步代码时，多个线程会先被存放在 EntryList 集合中，处于 block 状态的线程，都会被加入到该列表。接下来当线程获取到对象的 Monitor 时，Monitor 是依靠底层操作系统的 Mutex Lock 来实现互斥的，线程申请 Mutex 成功，则持有该 Mutex，其它线程将无法获取到该 Mutex。</p>
+<p>如果线程调用 wait() 方法，就会释放当前持有的 Mutex，并且该线程会进入 WaitSet 集合中，等待下一次被唤醒。如果当前线程顺利执行完方法，也将释放 Mutex。</p>
+<h2 id="JVM-性能监测及调优"><a href="#JVM-性能监测及调优" class="headerlink" title="JVM 性能监测及调优"></a>JVM 性能监测及调优</h2><h2 id="设计模式调优"><a href="#设计模式调优" class="headerlink" title="设计模式调优"></a>设计模式调优</h2><h2 id="数据库性能调优"><a href="#数据库性能调优" class="headerlink" title="数据库性能调优"></a>数据库性能调优</h2><h2 id="实战演练场"><a href="#实战演练场" class="headerlink" title="实战演练场"></a>实战演练场</h2>]]></content>
+      <categories>
+        <category>Java</category>
+        <category>Java 进阶</category>
+      </categories>
+      <tags>
+        <tag>性能</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Linux 常用命令</title>
+    <url>/2021/09/26/learning-summary/%E5%AE%B9%E5%99%A8%E6%9C%8D%E5%8A%A1%E4%B8%8E%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/Linux%20%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/</url>
+    <content><![CDATA[<h2 id="Linux-常用命令"><a href="#Linux-常用命令" class="headerlink" title="Linux 常用命令"></a>Linux 常用命令</h2><h3 id="AWK-文本处理"><a href="#AWK-文本处理" class="headerlink" title="AWK 文本处理"></a>AWK 文本处理</h3><p>输入数据前例程 BEGIN{}</p>
+<p>主输入循环 {}</p>
+<p>所有文件读取完成例程 END {}</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> x++ 序号</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> -F 指定分隔符</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="variable">$1</span> <span class="variable">$2</span> ... <span class="variable">$n</span> 表示每一个字段，<span class="variable">$0</span> 表示整行</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> /^menu/ 正则，以 menu 开头</span></span><br><span class="line">awk -F &quot;&#x27;&quot; &#x27;/^menu/&#123;print x++, $0&#125;&#x27; dpm.log</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> head -5 前5行</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 以 main 为分隔符，取第一个字段</span></span><br><span class="line">head -5 dpm.log | awk -F &quot;main&quot; &#x27;&#123;print $1&#125;&#x27;</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> FS 系统变量，输入字符分隔符，默认空格</span></span><br><span class="line">head -5 dpm.log | awk &#x27;BEGIN&#123;FS=&quot;main&quot;&#125;&#123;print $1&#125;&#x27;</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> OFS 系统变量，输出字符分隔符，默认空格</span></span><br><span class="line">head -5 dpm.log | awk &#x27;BEGIN&#123;FS=&quot;main&quot;;OFS=&quot;-&quot;&#125;&#123;print $1,$2&#125;&#x27;</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 当前记录中的字段个数</span></span><br><span class="line">head -5 dpm.log | awk &#x27;BEGIN&#123;FS=&quot;:&quot;&#125;&#123;print NF&#125;&#x27;</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 输出每行最后一个字段</span></span><br><span class="line">head -5 dpm.log | awk &#x27;BEGIN&#123;FS=&quot;:&quot;&#125;&#123;print $NF&#125;&#x27;</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 统计每行第一个字段为 2021-08-03，的行数</span></span><br><span class="line">awk &#x27;&#123;if($1==&quot;2021-08-03&quot;)count++&#125; END&#123;print &quot;total count&quot;, count&#125;&#x27; dpm.log</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>赋值操作符</p>
+<p>算数操作符</p>
+<p>系统变量</p>
+<p>关系操作符</p>
+<p>布尔操作符</p>
+]]></content>
+      <categories>
+        <category>操作系统与容器服务</category>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Docker 常用命令及常见问题</title>
+    <url>/2021/09/24/learning-summary/%E5%AE%B9%E5%99%A8%E6%9C%8D%E5%8A%A1%E4%B8%8E%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E5%8F%8A%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h3 id="Docker-常用命令及常见问题"><a href="#Docker-常用命令及常见问题" class="headerlink" title="Docker 常用命令及常见问题"></a>Docker 常用命令及常见问题</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run -d --name xx-xx \</span><br><span class="line">--restart=always \</span><br><span class="line">--network host \</span><br><span class="line">-m 3072M --cpus=1 \</span><br><span class="line">-v /etc/timezone:/etc/timezone \</span><br><span class="line">-v /etc/localtime:/etc/localtime \</span><br><span class="line">-v /etc/hosts:/etc/hosts \</span><br><span class="line">-v /home/admin/logs:/home/admin/logs \</span><br><span class="line">-e JAVA_TOOL_OPTIONS=&quot;-Dserver.port=9103&quot; \</span><br><span class="line">-e &quot;SPRING_PROFILES_ACTIVE=online&quot; \</span><br><span class="line">registry-vpc.cn-hangzhou.aliyuncs.com/xxx/xx-xx-web:$VERSION</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="docker资源无限使用"><a href="#docker资源无限使用" class="headerlink" title="docker资源无限使用"></a>docker资源无限使用</h4><p>默认不配置使用esc全部资源</p>
+<p>配置内存为1G ，可用cpu数为2：-m 1g –cpus=2</p>
+<p><a href="https://docs.docker.com/config/containers/resource_constraints/">https://docs.docker.com/config/containers/resource_constraints/</a></p>
+<h4 id="服务日志挂载"><a href="#服务日志挂载" class="headerlink" title="服务日志挂载"></a>服务日志挂载</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run -it -d -p 8081:8081 -v /home/admin/logs/xx:/home/admin/logs/xx registry-vpc.cn-shenzhen.aliyuncs.com/xx_dev/xx-xx-server:9b046698</span><br></pre></td></tr></table></figure>
+
+<h4 id="日志保留30天配置"><a href="#日志保留30天配置" class="headerlink" title="日志保留30天配置"></a>日志保留30天配置</h4><p>应用内日志配置，可以清理挂载到本地的日志。</p>
+<h4 id="centos-7-docker-启动了一个web服务-但是启动时-报-WARNING-IPv4-forwarding-is-disabled-Networking-will-not-work"><a href="#centos-7-docker-启动了一个web服务-但是启动时-报-WARNING-IPv4-forwarding-is-disabled-Networking-will-not-work" class="headerlink" title="centos 7 docker 启动了一个web服务 但是启动时 报 WARNING: IPv4 forwarding is disabled. Networking will not work."></a>centos 7 docker 启动了一个web服务 但是启动时 报 WARNING: IPv4 forwarding is disabled. Networking will not work.</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">需要做如下配置</span><br><span class="line"></span><br><span class="line">解决办法：</span><br><span class="line">vi /etc/sysctl.conf</span><br><span class="line">net.ipv4.ip_forward=1  #添加这段代码</span><br><span class="line"></span><br><span class="line">#重启network服务</span><br><span class="line">systemctl restart network &amp;&amp; systemctl restart docker</span><br><span class="line"></span><br><span class="line">#查看是否修改成功 （备注：返回1，就是成功）</span><br><span class="line">[root@docker-node2 ~]# sysctl net.ipv4.ip_forward</span><br><span class="line">net.ipv4.ip_forward = 1</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>操作系统与容器服务</category>
+        <category>Docker</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Git 常用命令及问题记录</title>
+    <url>/2021/09/24/learning-summary/%E5%B7%A5%E5%85%B7/Git%20%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/</url>
+    <content><![CDATA[<h2 id="Git-常用命令及问题记录"><a href="#Git-常用命令及问题记录" class="headerlink" title="Git 常用命令及问题记录"></a>Git 常用命令及问题记录</h2><p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/git1.jpeg" alt="输入图片说明" title="git_1.jpg"></p>
+<h4 id="1-git-本地分支和远程分支建立关联。"><a href="#1-git-本地分支和远程分支建立关联。" class="headerlink" title="1. git 本地分支和远程分支建立关联。"></a>1. git 本地分支和远程分支建立关联。</h4><pre><code>(使用git branch -vv  可以查看本地分支和远程分支的关联关系)  .根据命令行提示只需要执行以下命令即可
+
+git branch --set-upstream-to=origin/远程分支的名字 本地分支的名字
+</code></pre>
+<h4 id="2-git-设置sshkey时，执行ssh-add时出现Could-not-open-a-connection-to-your-authentication-agent-错误。"><a href="#2-git-设置sshkey时，执行ssh-add时出现Could-not-open-a-connection-to-your-authentication-agent-错误。" class="headerlink" title="2. git 设置sshkey时，执行ssh-add时出现Could not open a connection to your authentication agent 错误。"></a>2. git 设置sshkey时，执行ssh-add时出现Could not open a connection to your authentication agent 错误。</h4><pre><code>先执行 ssh-agent bash 再重试ssh-add。
+</code></pre>
+<h4 id="3-本地新建分支，并新建远程分支提交。"><a href="#3-本地新建分支，并新建远程分支提交。" class="headerlink" title="3.本地新建分支，并新建远程分支提交。"></a>3.本地新建分支，并新建远程分支提交。</h4><pre><code>1.本地创建分支：git checkout -b 分支名称
+
+2.把本地分支提交到远程仓库：git push origin 分支名称
+
+3.本地分支和远程分支建立关联：git branch --set-upstream-to=oriain/远程分支 本地分支
+</code></pre>
+<h4 id="3-git-tag-使用标记"><a href="#3-git-tag-使用标记" class="headerlink" title="3.git tag 使用标记"></a>3.git tag 使用标记</h4><pre><code>打标签
+git tag -a 0.1.3 -m “Release version 0.1.3″
+详解：git tag 是命令
+-a 0.1.3是增加 名为0.1.3的标签
+-m 后面跟着的是标签的注释
+打标签的操作发生在我们commit修改到本地仓库之后。完整的例子
+git add .
+git commit -m “fixed some bugs”
+git tag -a 0.1.3 -m “Release version 0.1.3″
+分享提交标签到远程服务器上
+git push origin master
+git push origin –tags
+–tags参数表示提交所有tag至服务器端，普通的git push origin master操作不会推送标签到服务器端。
+删除标签的命令
+git tag -d 0.1.3
+删除远端服务器的标签
+git push origin :refs/tags/0.1.3
+在github上只能删除仓库,却无法删除文件夹或文件, 所以只能通过命令来解决
+首先进入你的master文件夹下, Git Bash Here ,打开命令窗口
+$ git --help                                      # 帮助命令
+</code></pre>
+<h3 id="git如何删除已经提交的文件夹"><a href="#git如何删除已经提交的文件夹" class="headerlink" title="git如何删除已经提交的文件夹"></a>git如何删除已经提交的文件夹</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ git pull origin master                    # 将远程仓库里面的项目拉下来</span><br><span class="line">$ dir                                                # 查看有哪些文件夹</span><br><span class="line">$ git rm -r --cached .idea              # 删除.idea文件夹</span><br><span class="line">$ git commit -m &#x27;删除.idea&#x27;        # 提交,添加操作说明</span><br><span class="line">$ git push -u origin master               # 将本次更改更新到github项目上去</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="git-merge-后回退（强制push远程分支）"><a href="#git-merge-后回退（强制push远程分支）" class="headerlink" title="git merge 后回退（强制push远程分支）"></a>git merge 后回退（强制push远程分支）</h3><pre><code>①首先两步保证当前工作区是干净的，并且和远程分支代码一致
+②备份当前分支（如有必要）
+③恢复到指定的commit hash
+$ git reset --hard resetVersionHash
+④把当前分支强制提交到远程
+$ git push -f origin currentBranch
+</code></pre>
+<h3 id="git清除用户名密码"><a href="#git清除用户名密码" class="headerlink" title="git清除用户名密码"></a><a href="https://www.cnblogs.com/jimboi/p/9019942.html">git清除用户名密码</a></h3><pre><code>问题：
+remote: HTTP Basic: Access denied
+fatal: Authentication failed for &#39;http://
+
+解决方案：
+git config --system --unset credential.helper
+之后再进行git操作时，弹出用户名密码窗口，输入即可
+</code></pre>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>Git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Gitlab Runner</title>
+    <url>/2021/09/25/learning-summary/%E5%B7%A5%E5%85%B7/Gitlab%20runner/</url>
+    <content><![CDATA[<h3 id="Gitlab-Runner"><a href="#Gitlab-Runner" class="headerlink" title="Gitlab Runner"></a>Gitlab Runner</h3><h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-ci-multi-runner/script.rpm.sh | sudo bash</span><br><span class="line"></span><br><span class="line">yum install gitlab-ci-multi-runner</span><br></pre></td></tr></table></figure>
+
+<h4 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">gitlab-ci-multi-runner register</span><br><span class="line"></span><br><span class="line">配置文件路径   /etc/gitlab-runner/config.toml</span><br></pre></td></tr></table></figure>
+
+<h4 id="修改用户"><a href="#修改用户" class="headerlink" title="修改用户"></a>修改用户</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">路径</span><br><span class="line"> /etc/systemd/system/gitlab-runner.service</span><br><span class="line"></span><br><span class="line">配置 </span><br><span class="line">ExecStart=/usr/bin/gitlab-ci-multi-runner &quot;run&quot; &quot;--working-directory&quot; &quot;/home/gitlab-runner&quot; &quot;--config&quot; &quot;/etc/gitlab-runner/config.toml&quot; &quot;--service&quot; &quot;gitlab-runner&quot; &quot;--syslog&quot; &quot;--user&quot; &quot;root&quot;</span><br></pre></td></tr></table></figure>
+
+<h4 id="启动命令"><a href="#启动命令" class="headerlink" title="启动命令"></a>启动命令</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">gitlab-runner start \ stop \ restart</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="Gitlab-配置"><a href="#Gitlab-配置" class="headerlink" title="Gitlab 配置"></a>Gitlab 配置</h4><ul>
+<li><ul>
+<li>Settings -&gt; CI/CD       -&gt;  Runner </li>
+</ul>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>Gitlab</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>时序数据库-InfluxDB</title>
+    <url>/2021/09/24/learning-summary/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%97%B6%E5%BA%8F%E6%95%B0%E6%8D%AE%E5%BA%93-InfluxDB/</url>
+    <content><![CDATA[<p>时序数据库-InfluxDB</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> influxdb 2.x</span></span><br><span class="line">docker run -d -p 8083:8083 -p8086:8086 --expose 8090 --expose 8099 --name influxDbService influxdb</span><br><span class="line"><span class="meta">#</span><span class="bash"> -d: deamon, 后台启动</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> -p: port, 端口映射，宿主机端口:容器内端口；8083是influxdb的web管理工具端口，8086是influxdb的HTTP API 端口</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> --expose: 允许容器接受外部传入的数据</span></span><br><span class="line"></span><br><span class="line">docker exec -it influxDbService bash</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="Chronograf显示监控数据"><a href="#Chronograf显示监控数据" class="headerlink" title="Chronograf显示监控数据"></a>Chronograf显示监控数据</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run -d --name chronograf -p 8888:8888 -v /home/user/chronograf:/var/lib/chronograf chronograf</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Influxdb-基本概念"><a href="#Influxdb-基本概念" class="headerlink" title="Influxdb 基本概念"></a>Influxdb 基本概念</h3><h4 id="Database"><a href="#Database" class="headerlink" title="Database"></a>Database</h4><p>数据库是个逻辑容器，包含了 measurement、retention policies、continuous queries、time series data，类似于 mysql 的 database。</p>
+<h4 id="表（Measurement）"><a href="#表（Measurement）" class="headerlink" title="表（Measurement）"></a>表（Measurement）</h4><p>用于创建索引，提升查询性能，一般存放的是标示数据点来源的属性信息</p>
+<h4 id="Line-Protocol"><a href="#Line-Protocol" class="headerlink" title="Line Protocol"></a>Line Protocol</h4><h4 id="标签（Tag）"><a href="#标签（Tag）" class="headerlink" title="标签（Tag）"></a>标签（Tag）</h4><p>用于创建索引，提升查询性能，一般存放的是标示数据点来源的属性信息</p>
+<h4 id="Field"><a href="#Field" class="headerlink" title="Field"></a>Field</h4><p>用于创建索引，提升查询性能，一般存放的是标示数据点来源的属性信息</p>
+<h4 id="时间（Time）"><a href="#时间（Time）" class="headerlink" title="时间（Time）"></a>时间（Time）</h4><p>表示数据生成时的时间戳，与MySQL不同的是，在InfluxDB中，时间几乎可以看作主键的代名词。</p>
+<h4 id="时间序列线（Series）"><a href="#时间序列线（Series）" class="headerlink" title="时间序列线（Series）"></a>时间序列线（Series）</h4><p>表示表名、保留策略、标签集都相同的一组数据。（这些数据存储在内存中，如果 series 太多，会导致 OOM。）</p>
+<h4 id="保留策略（Retention-Policy）"><a href="#保留策略（Retention-Policy）" class="headerlink" title="保留策略（Retention Policy）"></a>保留策略（Retention Policy）</h4><p>定义InfluxDB的数据保留时长和数据存储的副本数，通过设置合理的保存时间（Duration）和副本数（Replication），在提升数据存储可用性的同时，避免数据爆炸。</p>
+<h4 id="Continuous-Query"><a href="#Continuous-Query" class="headerlink" title="Continuous Query"></a>Continuous Query</h4><h4 id="Shard"><a href="#Shard" class="headerlink" title="Shard"></a>Shard</h4><h4 id="时序数据记录（Point）"><a href="#时序数据记录（Point）" class="headerlink" title="时序数据记录（Point）"></a>时序数据记录（Point）</h4><p>表示一条具体的时序数据记录，由时序（Series）和时间戳（Timestamp）唯一标识，类似于MySQL中的一行记录。</p>
+<h3 id="存储引擎"><a href="#存储引擎" class="headerlink" title="存储引擎"></a>存储引擎</h3><h3 id="Influx-proxy-集群代理服务-2-2集群"><a href="#Influx-proxy-集群代理服务-2-2集群" class="headerlink" title="Influx-proxy 集群代理服务 2*2集群"></a>Influx-proxy 集群代理服务 2*2集群</h3><h4 id="Influxdb"><a href="#Influxdb" class="headerlink" title="Influxdb"></a>Influxdb</h4><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="comment"># influxdb.conf</span></span><br><span class="line"></span><br><span class="line"><span class="meta">reporting-disabled</span> = <span class="string">true         # 禁用报告，默认为 false</span></span><br><span class="line"><span class="attr">[meta]</span></span><br><span class="line"><span class="attr">dir</span> = <span class="string">&quot;/root/influxdb/meta&quot;    # 元信息目录</span></span><br><span class="line"><span class="attr">[data]</span></span><br><span class="line"><span class="attr">dir</span> = <span class="string">&quot;/root/influxdb/data&quot;    # 数据目录</span></span><br><span class="line"><span class="meta">wal-dir</span> = <span class="string">&quot;/root/influxdb/wal&quot; # 预写目录</span></span><br><span class="line"><span class="meta">wal-fsync-delay</span> = <span class="string">&quot;10ms&quot;          # SSD 设置为 0s，非 SSD 推荐设置为 0ms-100ms</span></span><br><span class="line"><span class="meta">index-version</span> = <span class="string">&quot;tsi1&quot;            # tsi1 磁盘索引，inmem 内存索引需要大量内存</span></span><br><span class="line"><span class="meta">query-log-enabled</span> = <span class="string">true          # 查询的日志，默认是 true</span></span><br><span class="line"><span class="meta">cache-max-memory-size</span> = <span class="string">&quot;1g&quot;      # 分片缓存写入的最大内存大小，默认是 1g</span></span><br><span class="line"><span class="attr">[coordinator]</span></span><br><span class="line"><span class="meta">write-timeout</span> = <span class="string">&quot;20s&quot;             # 写入请求超时时间，默认为 10s</span></span><br><span class="line"><span class="attr">[http]</span></span><br><span class="line"><span class="comment"># bind-address = &quot;:8086&quot;            # 绑定地址，需要绑定 ip:port 时使用</span></span><br><span class="line"><span class="meta">auth-enabled</span> = <span class="string">false              # 认证开关，默认是 false</span></span><br><span class="line"><span class="meta">log-enabled</span> = <span class="string">true                # http 请求日志，默认是 true</span></span><br><span class="line"><span class="meta">access-log-path</span> = <span class="string">&quot;/var/log/influxdb&quot;</span></span><br><span class="line"><span class="attr">[logging]</span></span><br><span class="line"><span class="attr">level</span> = <span class="string">&quot;info&quot;                    # 日志等级，error、warn、info(默认)、debug</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> influxdb_1</span></span><br><span class="line">docker stop influxdb_1</span><br><span class="line">docker rm influxdb_1</span><br><span class="line">docker run -it -d -p 8086:8086 \</span><br><span class="line">	--name influxdb_1 \</span><br><span class="line">    --expose 8090 --expose 8099 \</span><br><span class="line">	-v /home/influxdb/influxdb_1/data:/root/influxdb/data \</span><br><span class="line">    -v /home/influxdb/influxdb_1/meta:/root/influxdb/meta \</span><br><span class="line">    -v /home/influxdb/influxdb_1/wal:/root/influxdb/wal \</span><br><span class="line">    -v /home/influxdb/influxdb_1/log:/var/log/influxdb \</span><br><span class="line">    -v /home/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf \</span><br><span class="line">    influxdb:1.8</span><br><span class="line">    </span><br><span class="line"><span class="meta">#</span><span class="bash"> influxdb_2</span></span><br><span class="line">docker stop influxdb_2</span><br><span class="line">docker rm influxdb_2</span><br><span class="line">docker run -it -d -p 8087:8086 \</span><br><span class="line">	--name influxdb_2 \</span><br><span class="line">    --expose 8090 --expose 8099 \</span><br><span class="line">	-v /home/influxdb/influxdb_2/data:/root/influxdb/data \</span><br><span class="line">    -v /home/influxdb/influxdb_2/meta:/root/influxdb/meta \</span><br><span class="line">    -v /home/influxdb/influxdb_2/wal:/root/influxdb/wal \</span><br><span class="line">    -v /home/influxdb/influxdb_2/log:/var/log/influxdb \</span><br><span class="line">    -v /home/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf \</span><br><span class="line">    influxdb:1.8</span><br><span class="line">    </span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> influxdb_3</span></span><br><span class="line">docker stop influxdb_3</span><br><span class="line">docker rm influxdb_3</span><br><span class="line">docker run -it -d -p 8088:8086 \</span><br><span class="line">	--name influxdb_3 \</span><br><span class="line">    --expose 8090 --expose 8099 \</span><br><span class="line">	-v /home/influxdb/influxdb_3/data:/root/influxdb/data \</span><br><span class="line">    -v /home/influxdb/influxdb_3/meta:/root/influxdb/meta \</span><br><span class="line">    -v /home/influxdb/influxdb_3/wal:/root/influxdb/wal \</span><br><span class="line">    -v /home/influxdb/influxdb_3/log:/var/log/influxdb \</span><br><span class="line">    -v /home/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf \</span><br><span class="line">    influxdb:1.8</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line"><span class="meta">#</span><span class="bash"> influxdb_4</span></span><br><span class="line">docker stop influxdb_4</span><br><span class="line">docker rm influxdb_4</span><br><span class="line">docker run -it -d -p 8089:8086 \</span><br><span class="line">	--name influxdb_4 \</span><br><span class="line">    --expose 8090 --expose 8099 \</span><br><span class="line">	-v /home/influxdb/influxdb_4/data:/root/influxdb/data \</span><br><span class="line">    -v /home/influxdb/influxdb_4/meta:/root/influxdb/meta \</span><br><span class="line">    -v /home/influxdb/influxdb_4/wal:/root/influxdb/wal \</span><br><span class="line">    -v /home/influxdb/influxdb_4/log:/var/log/influxdb \</span><br><span class="line">    -v /home/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf \</span><br><span class="line">    influxdb:1.8</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="Influxdb-proxy"><a href="#Influxdb-proxy" class="headerlink" title="Influxdb-proxy"></a>Influxdb-proxy</h4><p>文档地址：<a href="https://github.com/chengshiwen/influx-proxy/wiki">https://github.com/chengshiwen/influx-proxy/wiki</a></p>
+<p>下载地址：<a href="https://github.com/chengshiwen/influx-proxy/releases/download/v2.5.6/influx-proxy-2.5.6-linux-amd64.tar.gz">https://github.com/chengshiwen/influx-proxy/releases/download/v2.5.6/influx-proxy-2.5.6-linux-amd64.tar.gz</a></p>
+<p>制作镜像：influx-proxy-2.5.6-linux-amd64.tar.gz 解压缩，在文件夹 influx-proxy-2.5.6-linux-amd64 同级目录下，创建 Dockerfile 文件，如下。</p>
+<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">FROM</span> centos</span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> mkdir -p /var/<span class="built_in">log</span>/proxy</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y epel-release</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y golang</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> rm -rf /var/cache/yum//*</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> /influx-proxy-2.5.6-linux-amd64/ influx-proxy</span></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> influx-proxy</span></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">7076</span></span><br><span class="line"><span class="keyword">CMD</span><span class="bash"> [<span class="string">&quot;/influx-proxy/influx-proxy&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> Dockerfile 同级执行 build 命令</span></span><br><span class="line">docker build -t influx-proxy:2.5.6 .</span><br></pre></td></tr></table></figure>
+
+<p>proxy.json</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">&quot;circles&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;circle-1&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;backends&quot;</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;influxdb-1-1&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;http://192.168.1.148:8086&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span></span><br><span class="line">                &#125;,</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;influxdb-1-2&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;http://192.168.1.148:8087&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span></span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;circle-2&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;backends&quot;</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;influxdb-2-1&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;http://192.168.1.148:8088&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span></span><br><span class="line">                &#125;,</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;influxdb-2-2&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;http://192.168.1.148:8089&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">                    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span></span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;listen_addr&quot;</span>: <span class="string">&quot;:7076&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;db_list&quot;</span>: [],</span><br><span class="line">    <span class="attr">&quot;data_dir&quot;</span>: <span class="string">&quot;data&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;tlog_dir&quot;</span>: <span class="string">&quot;log&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;hash_key&quot;</span>: <span class="string">&quot;idx&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;flush_size&quot;</span>: <span class="number">10000</span>,</span><br><span class="line">    <span class="attr">&quot;flush_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;check_interval&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;rewrite_interval&quot;</span>: <span class="number">10</span>,</span><br><span class="line">    <span class="attr">&quot;conn_pool_size&quot;</span>: <span class="number">20</span>,</span><br><span class="line">    <span class="attr">&quot;write_timeout&quot;</span>: <span class="number">10</span>,</span><br><span class="line">    <span class="attr">&quot;idle_timeout&quot;</span>: <span class="number">10</span>,</span><br><span class="line">    <span class="attr">&quot;username&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;password&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;auth_encrypt&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">&quot;write_tracing&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">&quot;query_tracing&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">&quot;https_enabled&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">&quot;https_cert&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;https_key&quot;</span>: <span class="string">&quot;&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker stop influx_proxy_1</span><br><span class="line">docker rm influx_proxy_1</span><br><span class="line">docker run -it -d -p 7076:7076 \</span><br><span class="line">	--name influx_proxy_1 \</span><br><span class="line">    -v /home/influxdb/proxy.json:/influx-proxy/proxy.json \</span><br><span class="line">    -v /home/influxdb/influx_proxy_1/data:/influx-proxy/data \</span><br><span class="line">    influx-proxy:2.5.6</span><br><span class="line"></span><br><span class="line">docker stop influx_proxy_2</span><br><span class="line">docker rm influx_proxy_2</span><br><span class="line">docker run -it -d -p 7077:7076 \</span><br><span class="line">    --name influx_proxy_2 \</span><br><span class="line">    -v /home/influxdb/proxy.json:/influx-proxy/proxy.json \</span><br><span class="line">    -v /home/influxdb/influx_proxy_2/data:/influx-proxy/data \</span><br><span class="line">    influx-proxy:2.5.6</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="nginx"><a href="#nginx" class="headerlink" title="nginx"></a>nginx</h4><p>nginx.conf</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">user  root;</span><br><span class="line">worker_processes  2;</span><br><span class="line"></span><br><span class="line">error_log  /var/log/nginx/error.log notice;</span><br><span class="line">pid        /var/run/nginx.pid;</span><br><span class="line"></span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections  1024;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http &#123;</span><br><span class="line">    include       /etc/nginx/mime.types;</span><br><span class="line">    default_type  application/octet-stream;</span><br><span class="line"></span><br><span class="line">    log_format  main  &#x27;$remote_addr - $remote_user [$time_local] &quot;$request&quot; &#x27;</span><br><span class="line">                      &#x27;$status $body_bytes_sent &quot;$http_referer&quot; &#x27;</span><br><span class="line">                      &#x27;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&#x27;;</span><br><span class="line"></span><br><span class="line">    access_log  /var/log/nginx/access.log  main;</span><br><span class="line">    </span><br><span class="line">    port_in_redirect  off;</span><br><span class="line">    </span><br><span class="line">    sendfile  on;</span><br><span class="line">    tcp_nopush  on;</span><br><span class="line">    tcp_nodelay  on;</span><br><span class="line"></span><br><span class="line">    keepalive_timeout  65;</span><br><span class="line">    client_body_timeout  12;</span><br><span class="line">    client_header_timeout  12;</span><br><span class="line">    send_timeout  10;</span><br><span class="line"></span><br><span class="line">    include  /etc/nginx/conf.d/*.conf;</span><br><span class="line"></span><br><span class="line">     upstream myserver &#123;</span><br><span class="line">        server 192.168.1.148:7076;</span><br><span class="line">        server 192.168.1.148:7077;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">     server &#123;</span><br><span class="line">        listen       8080;</span><br><span class="line">        server_name  localhost;</span><br><span class="line"></span><br><span class="line">        #charset koi8-r;</span><br><span class="line">        #access_log  logs/host.access.log  main;</span><br><span class="line"></span><br><span class="line">        location / &#123;</span><br><span class="line">            proxy_redirect off;</span><br><span class="line">            proxy_pass http://myserver;</span><br><span class="line">            proxy_set_header Host $host;</span><br><span class="line">            proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        #error_page  404              /404.html;</span><br><span class="line"></span><br><span class="line">        # redirect server error pages to the static page /50x.html</span><br><span class="line">        #</span><br><span class="line">        error_page   500 502 503 504  /50x.html;</span><br><span class="line">        location = /50x.html &#123;</span><br><span class="line">            root   html;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker stop nginx_influx_proxy</span><br><span class="line">docker rm nginx_influx_proxy</span><br><span class="line">docker run -it -d -p 8080:8080 \</span><br><span class="line">    --name nginx_influx_proxy \</span><br><span class="line">    -v /home/influxdb/nginx.conf:/etc/nginx/nginx.conf \</span><br><span class="line">    -v /home/influxdb/nginx/logs:/var/log/nginx \</span><br><span class="line">    nginx</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>数据库</category>
+        <category>时序</category>
+      </categories>
+      <tags>
+        <tag>InfluxDB</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MongoDB 基本操作</title>
+    <url>/2021/09/24/learning-summary/%E6%95%B0%E6%8D%AE%E5%BA%93/MongoDB%20%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C/</url>
+    <content><![CDATA[<h3 id="MongoDB-基本操作"><a href="#MongoDB-基本操作" class="headerlink" title="MongoDB 基本操作"></a>MongoDB 基本操作</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker run -itd --name mongo -p 27017:27017 mongo --auth</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash">接着使用以下命令添加用户和设置密码，并且尝试连接。</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> docker <span class="built_in">exec</span> -it mongo mongo admin</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 创建一个名为 admin，密码为 123456 的用户。</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash">  db.createUser(&#123; user:<span class="string">&#x27;admin&#x27;</span>,<span class="built_in">pwd</span>:<span class="string">&#x27;123456&#x27;</span>,roles:[ &#123; role:<span class="string">&#x27;userAdminAnyDatabase&#x27;</span>, db: <span class="string">&#x27;admin&#x27;</span>&#125;,<span class="string">&quot;readWriteAnyDatabase&quot;</span>]&#125;);</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 尝试使用上面创建的用户信息进行连接。</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> db.auth(<span class="string">&#x27;admin&#x27;</span>, <span class="string">&#x27;123456&#x27;</span>)</span></span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>数据库</category>
+        <category>NoSQL</category>
+      </categories>
+      <tags>
+        <tag>MongoDB</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java 并发编程</title>
+    <url>/2021/09/24/learning-summary/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/Java%20%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/</url>
+    <content><![CDATA[<h2 id="Java-并发编程"><a href="#Java-并发编程" class="headerlink" title="Java 并发编程"></a>Java 并发编程</h2><h3 id="可见性、原子性、有序性问题，并发编程-Bug-的源头"><a href="#可见性、原子性、有序性问题，并发编程-Bug-的源头" class="headerlink" title="可见性、原子性、有序性问题，并发编程 Bug 的源头"></a>可见性、原子性、有序性问题，并发编程 Bug 的源头</h3><h4 id="缓存导致的可见性问题"><a href="#缓存导致的可见性问题" class="headerlink" title="缓存导致的可见性问题"></a>缓存导致的可见性问题</h4><p>在单核时代，所有的线程都是在一颗 CPU上执行，CPU缓存与内存的数据一致性容易解决。因为所有线程都是操作同一个 CPU的缓存，一个线程对缓存的写，对另外一个线程来说一定是可见的。例如在下面的图中，线程 A和线程 B都是操作同一个 CPU里面的缓存，所以线程 A更新了变量 V的值，那么线程 B之后再访问变量 V，得到的一定是 V的最新值（线程 A写过的值）。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/bingfa1.png" alt="输入图片说明"></p>
+<p>一个线程对共享变量的修改，另外一个线程能够立刻看到，我们称为<strong>可见性</strong>。</p>
+<p>多核时代，每颗 CPU都有自己的缓存，这时 CPU缓存与内存的数据一致性就没那么容易解决了，当多个线程在不同的 CPU上执行时，这些线程操作的是不同的 CPU缓存。比如下图中，线程 A操作的是 CPU-1上的缓存，而线程 B操作的是 CPU-2上的缓存，很明显，这个时候线程 A对变量 V的操作对于线程 B而言就不具备可见性了。这个就属于硬件程序员给软件程序员挖的“坑”。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/094817_a4f8eca6_1461398.png" alt="输入图片说明" title="1628068856561.png"></p>
+<h4 id="线程切换带来的原子性问题"><a href="#线程切换带来的原子性问题" class="headerlink" title="线程切换带来的原子性问题"></a>线程切换带来的原子性问题</h4><p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/095726_fec1e856_1461398.png" alt="输入图片说明" title="1628076617710.png"></p>
+<p>Java并发程序都是基于多线程的，自然也会涉及到任务切换，也许你想不到，任务切换竟然也是并发编程里诡异 Bug的源头之一。任务切换的时机大多数是在时间片结束的时候，我们现在基本都使用高级语言编程，高级语言里一条语句往往需要多条 CPU指令完成，例如上面代码中的count+=1，至少需要三条 CPU指令。</p>
+<p>指令 1：首先，需要把变量 count从内存加载到 CPU的寄存器；</p>
+<p>指令 2：之后，在寄存器中执行 +1操作；</p>
+<p>指令 3：最后，将结果写入内存（缓存机制导致可能写入的是 CPU缓存而不是内存）。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/095803_71a92de7_1461398.png" alt="输入图片说明" title="1628076707850.png"></p>
+<p>我们潜意识里面觉得 count+=1这个操作是一个不可分割的整体，就像一个原子一样，线程的切换可以发生在 count+=1之前，也可以发生在 count+=1之后，但就是不会发生在中间。我们把一个或者多个操作在 CPU执行的过程中不被中断的特性称为原子性。</p>
+<p>CPU能保证的原子操作是 CPU指令级别的，而不是高级语言的操作符，这是违背我们直觉的地方。因此，很多时候我们需要在高级语言层面保证操作的原子性。</p>
+<h4 id="编译优化带来的有序性问题"><a href="#编译优化带来的有序性问题" class="headerlink" title="编译优化带来的有序性问题"></a>编译优化带来的有序性问题</h4><p>有序性指的是程序按照代码的先后顺序执行。编译器为了优化性能，有时候会改变程序中语句的先后顺序，例如程序中：“a=6；b=7；”编译器优化后可能变成“b=7；a=6；”，在这个例子中，编译器调整了语句的顺序，但是不影响程序的最终结果。不过有时候编译器及解释器的优化可能导致意想不到的 Bug。</p>
+<p>在 Java领域一个经典的案例就是利用双重检查创建单例对象，例如下面的代码：在获取实例 getInstance()的方法中，我们首先判断 instance是否为空，如果为空，则锁定Singleton.class并再次检查 instance是否为空，如果还为空则创建 Singleton的一个实例。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span></span><br><span class="line"><span class="class"><span class="keyword">class</span></span></span><br><span class="line"><span class="class"><span class="title">Singleton</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line"><span class="keyword">static</span></span><br><span class="line">Singleton</span><br><span class="line">instance;</span><br><span class="line"><span class="function"><span class="keyword">static</span></span></span><br><span class="line"><span class="function">Singleton</span></span><br><span class="line"><span class="function"><span class="title">getInstance</span><span class="params">()</span></span>&#123;</span><br><span class="line"><span class="keyword">if</span></span><br><span class="line">(instance</span><br><span class="line">==</span><br><span class="line"><span class="keyword">null</span>)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">synchronized</span>(Singleton.class)</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">if</span></span><br><span class="line">(instance</span><br><span class="line">==</span><br><span class="line"><span class="keyword">null</span>)</span><br><span class="line">instance</span><br><span class="line">=</span><br><span class="line"><span class="keyword">new</span></span><br><span class="line">Singleton();</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span></span><br><span class="line">instance;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>假设有两个线程 A、B同时调用 getInstance()方法，他们会同时发现instance==null，于是同时对 Singleton.class加锁，此时 JVM保证只有一个线程能够加锁成功（假设是线程 A），另外一个线程则会处于等待状态（假设是线程 B）；线程 A会创建一个 Singleton实例，之后释放锁，锁释放后，线程 B被唤醒，线程 B再次尝试加锁，此时是可以加锁成功的，加锁成功后，线程 B检查instance==null时会发现，已经创建过 Singleton实例了，所以线程 B不会再创建一个 Singleton实例。</p>
+<p>这看上去一切都很完美，无懈可击，但实际上这个 getInstance()方法并不完美。问题出在哪里呢？出在 new操作上，我们以为的 new操作应该是：</p>
+<p>1.分配一块内存 M；</p>
+<p>2.在内存 M上初始化 Singleton对象；</p>
+<p>3.然后 M的地址赋值给 instance变量。</p>
+<p>但是实际上优化后的执行路径却是这样的：</p>
+<p>1.分配一块内存 M；</p>
+<p>2.将 M的地址赋值给 instance变量；</p>
+<p>3.最后在内存 M上初始化 Singleton对象。</p>
+<p>优化后会导致什么问题呢？我们假设线程 A先执行 getInstance()方法，当执行完指令 2时恰好发生了线程切换，切换到了线程 B上；如果此时线程 B也执行 getInstance()方法，那么线程 B会发现instance!=null，所以直接返回 instance，而此时的instance是没有初始化过的，如果我们这个时候访问 instance的成员变量就可能触发空指针异常。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/095836_8bbb7f93_1461398.png" alt="输入图片说明" title="1628078617275.png"></p>
+<p>缓存导致的可见性问题，线程切换带来的原子性问题，编译优化带来的有序性问题，其实缓存、线程、编译优化的目的和我们写并发程序的目的是相同的，都是提高程序性能。但是技术在解决一个问题的同时，必然会带来另外一个问题，所以在采用一项技术的同时，一定要清楚它带来的问题是什么，以及如何规避。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>Java 进阶</category>
+      </categories>
+      <tags>
+        <tag>并发</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>linux 使用 VMware 启动虚拟机报错</title>
+    <url>/2021/09/26/learning-summary/%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/linux-VMware/</url>
+    <content><![CDATA[<h3 id="linux-使用-VMware-启动虚拟机报错"><a href="#linux-使用-VMware-启动虚拟机报错" class="headerlink" title="linux 使用 VMware 启动虚拟机报错"></a>linux 使用 VMware 启动虚拟机报错</h3><h4 id="kernel-Headers-3-10-0-1160-36-2-el7-x86-64-were-not-found"><a href="#kernel-Headers-3-10-0-1160-36-2-el7-x86-64-were-not-found" class="headerlink" title="kernel Headers 3.10.0-1160.36.2.el7.x86_64 were not found"></a>kernel Headers 3.10.0-1160.36.2.el7.x86_64 were not found</h4><p>在运行VMware之前，必须对几个模块进行编译并加载到正在运行的内核中。</p>
+<p>内核头文件3.10.0-1160.36.2.el7.x86643.10.0-1160.36.2.el7版本的内核头文件。未找到X86_64。如果您将它们安装在非默认路径中，您可以在下面指定路径。否则，请参阅发行版的文档获取安装说明，并单击Refresh在默认位置再次搜索</p>
+<p><a href="https://blog.csdn.net/hyt941026/article/details/97160649">https://blog.csdn.net/hyt941026/article/details/97160649</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看内核版本</span></span><br><span class="line">uname -r </span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看kernel-headers版本</span></span><br><span class="line">rpm -qa kernel-headers</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看kernel-devel版本</span></span><br><span class="line">rpm -qa kernel-devel</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装kernel</span></span><br><span class="line">yum install kernel-$(uname -r)</span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装kernel-headers</span></span><br><span class="line">yum install kernel-headers-$(uname -r)</span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装kernel-devel</span></span><br><span class="line">yum install kernel-devel-$(uname -r)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="安装docker时，Could-not-resolve-host-yum-dockerproject-org-Unknown-error，导致yum也用不了"><a href="#安装docker时，Could-not-resolve-host-yum-dockerproject-org-Unknown-error，导致yum也用不了" class="headerlink" title="安装docker时，Could not resolve host: yum.dockerproject.org; Unknown error，导致yum也用不了"></a>安装docker时，Could not resolve host: yum.dockerproject.org; Unknown error，导致yum也用不了</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">[xinggj@master /]$ yum list kernel-headers</span><br><span class="line">已加载插件：fastestmirror, langpacks</span><br><span class="line">Repository pgdg93 is listed more than once in the configuration</span><br><span class="line">Repository pgdg93-source is listed more than once in the configuration</span><br><span class="line">Loading mirror speeds from cached hostfile</span><br><span class="line">base                                                       | 3.6 kB  00:00:00</span><br><span class="line">docker-ce-stable                                           | 3.5 kB  00:00:00</span><br><span class="line">https://yum.dockerproject.org/repo/main/centos/7/repodata/repomd.xml: [Errno 14] curl#6 - &quot;Could not resolve host: yum.dockerproject.org; 未知的名称或服务&quot;</span><br><span class="line">正在尝试其它镜像。</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"> One of the configured repositories failed (Docker Repository),</span><br><span class="line"> and yum doesn&#x27;t have enough cached data to continue. At this point the only</span><br><span class="line"> safe thing yum can do is fail. There are a few ways to work &quot;fix&quot; this:</span><br><span class="line"></span><br><span class="line">     1. Contact the upstream for the repository and get them to fix the problem.</span><br><span class="line"></span><br><span class="line">     2. Reconfigure the baseurl/etc. for the repository, to point to a working</span><br><span class="line">        upstream. This is most often useful if you are using a newer</span><br><span class="line">        distribution release than is supported by the repository (and the</span><br><span class="line">        packages for the previous distribution release still work).</span><br><span class="line"></span><br><span class="line">     3. Run the command with the repository temporarily disabled</span><br><span class="line">            yum --disablerepo=dockerrepo ...</span><br><span class="line"></span><br><span class="line">     4. Disable the repository permanently, so yum won&#x27;t use it by default. Yum</span><br><span class="line">        will then just ignore the repository until you permanently enable it</span><br><span class="line">        again or use --enablerepo for temporary usage:</span><br><span class="line"></span><br><span class="line">            yum-config-manager --disable dockerrepo</span><br><span class="line">        or</span><br><span class="line">            subscription-manager repos --disable=dockerrepo</span><br><span class="line"></span><br><span class="line">     5. Configure the failing repository to be skipped, if it is unavailable.</span><br><span class="line">        Note that yum will try to contact the repo. when it runs most commands,</span><br><span class="line">        so will have to try and fail each time (and thus. yum will be be much</span><br><span class="line">        slower). If it is a very temporary problem though, this is often a nice</span><br><span class="line">        compromise:</span><br><span class="line"></span><br><span class="line">            yum-config-manager --save --setopt=dockerrepo.skip_if_unavailable=true</span><br><span class="line"></span><br><span class="line">failure: repodata/repomd.xml from dockerrepo: [Errno 256] No more mirrors to try.</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 快速解决： 删除/etc/yum.repos.d下的有关docker文件</span><br><span class="line">cd /etc/yum.repos.d</span><br><span class="line">mv docker-ce.repo /</span><br><span class="line">mv docker.repo /</span><br><span class="line"></span><br><span class="line"># 其他解决方式：</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>问题排查</category>
+      </categories>
+      <tags>
+        <tag>Gitlab</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>【linux】gitrunner打包机打包镜像出现空间不足的问题排查及解决</title>
+    <url>/2021/09/24/learning-summary/%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/%E3%80%90linux%E3%80%91gitRunner%E6%89%93%E5%8C%85%E6%9C%BA%E6%89%93%E5%8C%85%E9%95%9C%E5%83%8F%E5%87%BA%E7%8E%B0%E7%A9%BA%E9%97%B4%E4%B8%8D%E8%B6%B3%E7%9A%84%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5%E5%8F%8A%E8%A7%A3%E5%86%B3/</url>
+    <content><![CDATA[<h3 id="【linux】gitrunner打包机打包镜像出现空间不足的问题排查及解决"><a href="#【linux】gitrunner打包机打包镜像出现空间不足的问题排查及解决" class="headerlink" title="【linux】gitrunner打包机打包镜像出现空间不足的问题排查及解决"></a>【linux】gitrunner打包机打包镜像出现空间不足的问题排查及解决</h3><h4 id="问题现象"><a href="#问题现象" class="headerlink" title="问题现象"></a>问题现象</h4><p>gitRunner的打包机器执行命令打包docker镜像时报no space left on device的错误，无法正确打包。</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/102607_66b7eadd_1461398.png" alt="输入图片说明" title="gitRunner_1.png"></p>
+<h4 id="问题排查步骤"><a href="#问题排查步骤" class="headerlink" title="问题排查步骤"></a>问题排查步骤</h4><ul>
+<li>登录打包机查看机器剩余磁盘容量，得到结果物理机磁盘仍有剩余空间。</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">df -h</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>通过复制文件证明磁盘空间确有剩余，但是在物理机上直接执行docker命令依然存在no      space left on device空间不足的报错</li>
+<li>通过搜索找到原因服务机inodes使用过高，执行指令得到结果inodes占用100%，原因为docker打包过程中小文件生成过多导致inodes占用过高</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">df -i</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>执行命令查找物理机上文件数量较多的文件目录,发现文件集中在/var/lib/docker/overlay2/目录下</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">find / -xdev -printf &#x27;%h\n&#x27; | sort | uniq -c | sort -k 1 -n</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>进入到对应目录下，清空目录下docker缓存文件</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cd /var/lib/docker/overlay2/</span><br><span class="line"></span><br><span class="line">ls | xargs rm -rf</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>重置docker环境配置</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">docker system prune -a</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>问题排查</category>
+      </categories>
+      <tags>
+        <tag>Gitlab</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Redis 的对象类型</title>
+    <url>/2021/09/26/learning-summary/%E7%BC%93%E5%AD%98/Redis%20%E7%9A%84%E5%AF%B9%E8%B1%A1%E7%B1%BB%E5%9E%8B/</url>
+    <content><![CDATA[<h2 id="Redis-的对象类型"><a href="#Redis-的对象类型" class="headerlink" title="Redis 的对象类型"></a>Redis 的对象类型</h2><p>Redis使用对象来表示数据库中的键和值，每次当我们在Redis的数据库中新创建一个键值对时，我们至少会创建两个对象，一个对象用作键值对的键（键对象），另一个对象用作键值对的值（值对象）。</p>
+<p>Redis中的每个对象都由一个redisObject结构表示，该结构中和保存数据有关的三个属性分别是type属性、encoding属性和ptr属性：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">redisObject</span> &#123;</span></span><br><span class="line">    <span class="comment">// 类型</span></span><br><span class="line">    <span class="keyword">unsigned</span> type:<span class="number">4</span>;</span><br><span class="line">    <span class="comment">// 编码</span></span><br><span class="line">    <span class="keyword">unsigned</span> encoding:<span class="number">4</span>;</span><br><span class="line">    <span class="comment">// 指向底层实现数据结构的指针</span></span><br><span class="line">    <span class="keyword">void</span> *ptr;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125; robj;</span><br></pre></td></tr></table></figure>
+
+<h3 id="类型"><a href="#类型" class="headerlink" title="类型"></a>类型</h3><p><strong>对象的类型</strong></p>
+<table>
+<thead>
+<tr>
+<th>对象 TYPE 类型常量</th>
+<th>对象的名称</th>
+<th>TYPE 命令的输出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REDIS_STRING</td>
+<td>字符串对象</td>
+<td>string</td>
+</tr>
+<tr>
+<td>REDIS_LIST</td>
+<td>列表对象</td>
+<td>list</td>
+</tr>
+<tr>
+<td>REDIS_HASH</td>
+<td>哈希对象</td>
+<td>hash</td>
+</tr>
+<tr>
+<td>REDIS_SET</td>
+<td>集合对象</td>
+<td>set</td>
+</tr>
+<tr>
+<td>REDIS_ZSET</td>
+<td>有序集合对象</td>
+<td>zset</td>
+</tr>
+</tbody></table>
+<p>对于Redis数据库保存的键值对来说，键总是一个字符串对象，而值则可以是字符串对象、列表对象、哈希对象、集合对象或者有序集合对象的其中一种，因此：</p>
+<p>​    ❑当我们称呼一个数据库键为“字符串键”时，我们指的是“这个数据库键所对应的值为字符串对象”；</p>
+<p>​    ❑当我们称呼一个键为“列表键”时，我们指的是“这个数据库键所对应的值为列表对象”。</p>
+<p>TYPE 命令可以返回数据库键对应的值对象的类型</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> docker 启动 Redis</span></span><br><span class="line">docker run -p 6379:6379 -v /home/app/redis/redis.conf:/etc/redis/redis.conf -v /home/app/redis/data:/data -d redis redis- server /etc/redis/redis.conf --appendonly yes</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash">进入容器</span></span><br><span class="line">docker exec -it ab4e03b5d9c0 bash</span><br><span class="line"><span class="meta">#</span><span class="bash">本地无密码登录</span></span><br><span class="line">redis-cli</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash">redis 版本</span></span><br><span class="line">127.0.0.1:6379&gt; info</span><br><span class="line"><span class="meta">#</span><span class="bash"> Server</span></span><br><span class="line">redis_version:6.2.4</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为字符串对象</span></span><br><span class="line">127.0.0.1:6379&gt; SET msg &quot;hello world&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; TYPE msg</span><br><span class="line">string</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为列表对象</span></span><br><span class="line">127.0.0.1:6379&gt; RPUSH numbers 1 3 5</span><br><span class="line">(integer) 3</span><br><span class="line">127.0.0.1:6379&gt; TYPE numbers</span><br><span class="line">list</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为哈希对象</span></span><br><span class="line">127.0.0.1:6379&gt; HMSET profile name Tom age 25</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; TYPE profile</span><br><span class="line">hash</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为集合对象</span></span><br><span class="line">127.0.0.1:6379&gt; SADD fruits apple banana cherry</span><br><span class="line">(integer) 3</span><br><span class="line">127.0.0.1:6379&gt; TYPE fruits</span><br><span class="line">set</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 键为字符串，值为有序集合对象</span></span><br><span class="line">127.0.0.1:6379&gt; ZADD price 8.5 apple 5.0 banana</span><br><span class="line">(integer) 2</span><br><span class="line">127.0.0.1:6379&gt; TYPE price</span><br><span class="line">zset</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="编码和底层实现"><a href="#编码和底层实现" class="headerlink" title="编码和底层实现"></a>编码和底层实现</h3><p>对象的ptr指针指向对象的底层实现数据结构，而这些数据结构由对象的encoding属性决定。encoding属性记录了对象所使用的编码，也即是说这个对象使用了什么数据结构作为对象的底层实现。</p>
+<p>对象的编码</p>
+<table>
+<thead>
+<tr>
+<th>编码常量</th>
+<th>编码所对应的底层数据结构</th>
+<th>OBJECT ENCODING 命令输出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REDIS_ENCODING_INT</td>
+<td>long 类型的整数</td>
+<td>“int”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_EMBSTR</td>
+<td>embstr 编码的简单动态字符串（SDS）</td>
+<td>“embstr”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_RAW</td>
+<td>简单动态字符串</td>
+<td>“raw”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_HT</td>
+<td>字典</td>
+<td>“hashtable”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_LINKEDLIST</td>
+<td>双端链表</td>
+<td>“linkedlist”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>压缩列表</td>
+<td>“ziplist”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_INTSET</td>
+<td>整数集合</td>
+<td>“intset”</td>
+</tr>
+<tr>
+<td>REDIS_ENCODING_SKIPLIST</td>
+<td>跳跃表和字典</td>
+<td>“skiplist”</td>
+</tr>
+</tbody></table>
+<p>每种类型的对象都至少使用了两种不同的编码，下图列出了每种类型的对象可以使用的编码。</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>编码</th>
+<th>对象</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>REDIS_STRING</td>
+<td>REDIS_ENCODING_INT</td>
+<td>使用整数值实现的字符串对象</td>
+</tr>
+<tr>
+<td>REDIS_STRING</td>
+<td>REDIS_ENCODING_EMBSTR</td>
+<td>使用 embstr 编码的简单动态字符串实现的字符串对象</td>
+</tr>
+<tr>
+<td>REDIS_STRING</td>
+<td>REDIS_ENCODING_RAW</td>
+<td>使用简单动态字符串实现的字符串对象</td>
+</tr>
+<tr>
+<td>REDIS_LIST</td>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>使用压缩列表实现的列表对象</td>
+</tr>
+<tr>
+<td>REDIS_LIST</td>
+<td>REDIS_ENCODING_LINKEDLIST</td>
+<td>使用双端链表实现的列表对象</td>
+</tr>
+<tr>
+<td>REDIS_HASH</td>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>使用压缩列表实现的哈希对象</td>
+</tr>
+<tr>
+<td>REDIS_HASH</td>
+<td>REDIS_ENCODING_HT</td>
+<td>使用字典实现的哈希对象</td>
+</tr>
+<tr>
+<td>REDIS_SET</td>
+<td>REDIS_ENCODING_INTSET</td>
+<td>使用整数集合实现的集合对象</td>
+</tr>
+<tr>
+<td>REDIS_SET</td>
+<td>REDIS_ENCODING_HT</td>
+<td>使用字典实现的哈希对象</td>
+</tr>
+<tr>
+<td>REDIS_ZSET</td>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>使用压缩列表实现的有序集合对象</td>
+</tr>
+<tr>
+<td>REDIS_ZSET</td>
+<td>REDIS_ENCODING_SKIPLIST</td>
+<td>使用跳跃表和字典实现的有序集合对象</td>
+</tr>
+</tbody></table>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET msg &quot;hello world&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING msg</span><br><span class="line">&quot;embstr&quot;</span><br><span class="line">127.0.0.1:6379&gt; SET story &quot;long long long long long long long long long age ...&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING story</span><br><span class="line">&quot;raw&quot;</span><br><span class="line">127.0.0.1:6379&gt; SADD number 1 3 5</span><br><span class="line">(integer) 3</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;intset&quot;</span><br><span class="line">127.0.0.1:6379&gt; SADD number &quot;seven&quot;</span><br><span class="line">(integer) 1</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;hashtable&quot;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>通过encoding属性来设定对象所使用的编码，而不是为特定类型的对象关联一种固定的编码，极大地提升了Redis的灵活性和效率，因为Redis可以根据不同的使用场景来为一个对象设置不同的编码，从而优化对象在某一场景下的效率。</p>
+<p>举个例子，在列表对象包含的元素比较少时，Redis使用压缩列表作为列表对象的底层实现：</p>
+<p>​        ❑因为压缩列表比双端链表更节约内存，并且在元素数量较少时，在内存中以连续块方式保存的压缩列表比起双端链        表可以更快被载入到缓存中；</p>
+<p>​        ❑随着列表对象包含的元素越来越多，使用压缩列表来保存元素的优势逐渐消失时，对象就会将底层实现从压缩列表        转向功能更强、也更适合保存大量元素的双端链表上面；</p>
+<p>其他类型的对象也会通过使用多种不同的编码来进行类似的优化。</p>
+<p>接下来，分别介绍Redis中的五种不同类型的对象，说明这些对象底层所使用的编码方式，列出对象从一种编码转换成另一种编码所需的条件，以及同一个命令在多种不同编码上的实现方法。</p>
+<h3 id="字符串对象"><a href="#字符串对象" class="headerlink" title="字符串对象"></a>字符串对象</h3><p>字符串对象的编码可以是 <strong>int</strong>、<strong>raw</strong> 或者 <strong>embstr</strong>。</p>
+<p>如果一个字符串对象保存的是整数值，并且这个整数值可以用long类型来表示，那么字符串对象会将整数值保存在字符串对象结构的ptr属性里面（将void*转换成long），并将字符串对象的编码设置为int。</p>
+<p>​                                                            int编码的字符串对象</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/093411_d0af55c5_1461398.png" alt="int编码的字符串对象" title="1627726354097.png"></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET number 10086</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;int&quot;</span><br><span class="line">127.0.0.1:6379&gt; SET number 10086.1</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;embstr&quot;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>如果字符串对象保存的是一个字符串值，并且这个字符串值的长度大于44字节，那么字符串对象将使用一个简单动态字符串（SDS）来保存这个字符串值，并将对象的编码设置为raw。</p>
+<pre><code>     raw编码的字符串对象
+</code></pre>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/093812_236a9f30_1461398.png" alt="raw编码的字符串对象" title="1627727078463.png"></p>
+<p>如果字符串对象保存的是一个字符串值，并且这个字符串值的长度小于等于44字节，那么字符串对象将使用embstr编码的方式来保存这个字符串值。</p>
+<p>embstr编码是专门用于保存短字符串的一种优化编码方式，这种编码和raw编码一样，都使用redisObject结构和sdshdr结构来表示字符串对象，但raw编码会调用两次内存分配函数来分别创建redisObject结构和sdshdr结构，而embstr编码则通过调用一次内存分配函数来分配一块连续的空间，空间中依次包含redisObject和sdshdr两个结构。</p>
+<p>​        embstr编码创建的内存块结构</p>
+<p><img src="https://gitee.com/alisuntf/cdn/raw/master/java/093855_65763ded_1461398.png" alt="embstr编码创建的内存块结构" title="1627738613774.png"></p>
+<p>embstr编码的字符串对象在执行命令时，产生的效果和raw编码的字符串对象执行命令时产生的效果是相同的，但使用embstr编码的字符串对象来保存短字符串值有以下好处：</p>
+<p>​        ❑embstr编码将创建字符串对象所需的内存分配次数从raw编码的两次降低为一次。</p>
+<p>​        ❑释放embstr编码的字符串对象只需要调用一次内存释放函数，而释放raw编码的字符串对象需要调用两次内存释放        函数。</p>
+<p>​        ❑因为embstr编码的字符串对象的所有数据都保存在一块连续的内存里面，所以这种编码的字符串对象比起raw编码        的字符串对象能够更好地利用缓存带来的优势。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET story &quot;Long, long ago there lived a king 11122222222&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt;</span><br><span class="line">127.0.0.1:6379&gt; STRLEN story</span><br><span class="line">(integer) 45</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING story</span><br><span class="line">&quot;raw&quot;</span><br><span class="line">127.0.0.1:6379&gt; SET story &quot;Long, long ago there lived a king 1112222222&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; STRLEN story</span><br><span class="line">(integer) 44</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING story</span><br><span class="line">&quot;embstr&quot;</span><br></pre></td></tr></table></figure>
+
+<p>最后要说的是，可以用long double类型表示的浮点数在Redis中也是作为字符串值来保存的。如果我们要保存一个浮点数到字符串对象里面，那么程序会先将这个浮点数转换成字符串值，然后再保存转换所得的字符串值。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET pi 3.14</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING pi</span><br><span class="line">&quot;embstr&quot;</span><br><span class="line">127.0.0.1:6379&gt; INCRBYFLOAT pi 2.0</span><br><span class="line">&quot;5.14&quot;</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING pi</span><br><span class="line">&quot;embstr&quot;</span><br></pre></td></tr></table></figure>
+
+<p>在有需要的时候，程序会将保存在字符串对象里面的字符串值转换回浮点数值，执行某些操作，然后再将执行操作所得的浮点数值转换回字符串值，并继续保存在字符串对象里面。</p>
+<p>那么程序首先会取出字符串对象里面保存的字符串值”3.14”，将它转换回浮点数值3.14，然后把3.14和2.0相加得出的值5.14转换成字符串”5.14”，并将这个”5.14”保存到字符串对象里面。下表总结并列出了字符串对象保存各种不同类型的值所使用的编码方式。</p>
+<p>字符串对象保存各类型值的编码方式</p>
+<table>
+<thead>
+<tr>
+<th align="left">值</th>
+<th>编码</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">可以用 long 类型保存的整数</td>
+<td>int</td>
+</tr>
+<tr>
+<td align="left">可以用 long double 类型保存的浮点数</td>
+<td>embstr 或者 raw</td>
+</tr>
+<tr>
+<td align="left">字符串值，或者不能 long 类型表示的整数、不能用long double 类型表示的浮点数</td>
+<td>embstr 或者 raw</td>
+</tr>
+</tbody></table>
+<h4 id="编码的转换"><a href="#编码的转换" class="headerlink" title="编码的转换"></a>编码的转换</h4><p>int编码的字符串对象和embstr编码的字符串对象在条件满足的情况下，会被转换为raw编码的字符串对象。</p>
+<p>对于int编码的字符串对象来说，如果我们向对象执行了一些命令，使得这个对象保存的不再是整数值，而是一个字符串值，那么字符串对象的编码将从int变为raw。</p>
+<p>在下面的示例中，我们通过APPEND命令，向一个保存整数值的字符串对象追加了一个字符串值，因为追加操作只能对字符串值执行，所以程序会先将之前保存的整数值10086转换为字符串值”10086”，然后再执行追加操作，操作的执行结果就是一个raw编码的、保存了字符串值的字符串对象：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET number 10086</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;int&quot;</span><br><span class="line">127.0.0.1:6379&gt; APPEND number &quot; is a goog number!&quot;</span><br><span class="line">(integer) 23</span><br><span class="line">127.0.0.1:6379&gt; GET number</span><br><span class="line">&quot;10086 is a goog number!&quot;</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING number</span><br><span class="line">&quot;raw&quot;</span><br></pre></td></tr></table></figure>
+
+<p>另外，因为Redis没有为embstr编码的字符串对象编写任何相应的修改程序（只有int编码的字符串对象和raw编码的字符串对象有这些程序），所以embstr编码的字符串对象实际上是只读的。当我们对embstr编码的字符串对象执行任何修改命令时，程序会先将对象的编码从embstr转换成raw，然后再执行修改命令。因为这个原因，embstr编码的字符串对象在执行修改命令之后，总会变成一个raw编码的字符串对象。</p>
+<p>以下代码展示了一个embstr编码的字符串对象在执行APPEND命令之后，对象的编码从embstr变为raw的例子：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">127.0.0.1:6379&gt; SET msg &quot;hello world&quot;</span><br><span class="line">OK</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING msg</span><br><span class="line">&quot;embstr&quot;</span><br><span class="line">127.0.0.1:6379&gt; APPEND msg &quot; again!&quot;</span><br><span class="line">(integer) 18</span><br><span class="line">127.0.0.1:6379&gt; OBJECT ENCODING msg</span><br><span class="line">&quot;raw&quot;</span><br></pre></td></tr></table></figure>
+
+<h4 id="字符串命令的实现"><a href="#字符串命令的实现" class="headerlink" title="字符串命令的实现"></a>字符串命令的实现</h4><p>因为字符串键的值为字符串对象，所以用于字符串键的所有命令都是针对字符串对象来构建的，下表列举了其中一部分字符串命令，以及这些命令在不同编码的字符串对象下的实现方法。</p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>int 编码的实现方式</th>
+<th>embstr 编码的实现方式</th>
+<th>raw 编码的实现方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SET</td>
+<td>使用 int 编码保存值</td>
+<td>使用 embstr 编码保存值</td>
+<td>使用 raw 编码保存值</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>拷贝对象保存的整数，将这个拷贝转成字符串值，向客户端返回字符串</td>
+<td>直接向客户端返回字符串</td>
+<td>直接向客户端返回字符串</td>
+</tr>
+<tr>
+<td>APPEND</td>
+<td>将对象转成 raw 编码，用 raw 编码的方式执行此操作</td>
+<td>将对象转成 raw 编码，用 raw 编码的方式执行此操作</td>
+<td>调用 sdscatien 函数，将给定字符串追加到现有字符串后面</td>
+</tr>
+<tr>
+<td>INCRBYFLOAT</td>
+<td>取出整数值并将其转换成 long double 类型的浮点数，对这个浮点数进行加法计算，然后将计算结果保存</td>
+<td>取出字符串并尝试转成 long double 类型的浮点数，对这个浮点数进行加法计算，然后将计算结果保存。如果这个字符串不能转成浮点数，向客户端返回一个错误</td>
+<td>取出字符串并尝试转成 long double 类型的浮点数，对这个浮点数进行加法计算，然后将计算结果保存。如果这个字符串不能转成浮点数，向客户端返回一个错误</td>
+</tr>
+<tr>
+<td>INCRBY</td>
+<td>对整数进行加法计算，得出的计算结果会作为整数保存起来</td>
+<td>embstr 编码不能执行此命令，向客户端返回一个错误</td>
+<td>raw 编码不能执行此命令，向客户端返回一个错误</td>
+</tr>
+<tr>
+<td>DECRBY</td>
+<td>对整数进行减法计算，得出的计算结果会作为整数保存起来</td>
+<td>embstr 编码不能执行此命令，向客户端返回一个错误</td>
+<td>raw 编码不能执行此命令，向客户端返回一个错误</td>
+</tr>
+<tr>
+<td>STRLEN</td>
+<td>拷贝对象所保存的整数值，将这个拷贝转成字符串值，计算并返回字符串长度</td>
+<td>调用 sdslen 函数，返回字符串长度</td>
+<td>调用 sdslen 函数，返回字符串长度</td>
+</tr>
+<tr>
+<td>SETRANGE</td>
+<td>将对象转成 raw 编码，按照 raw 编码的方式执行</td>
+<td>将对象转成 raw 编码，按照 raw 编码的方式执行</td>
+<td>将字符串特定索引上的值设置为给定的字符</td>
+</tr>
+<tr>
+<td>GETRANGE</td>
+<td>拷贝对象所保存的整数值，将这个拷贝转成字符串值，然后取出并返回字符串指定索引上的字符</td>
+<td>直接取出并返回字符串指定索引上的字符</td>
+<td>直接取出并返回字符串指定索引上的字符</td>
+</tr>
+</tbody></table>
+<h4 id="简单动态字符"><a href="#简单动态字符" class="headerlink" title="简单动态字符"></a>简单动态字符</h4><p>Redis只会使用C字符串作为字面量，在大多数情况下，Redis使用SDS（Simple DynamicString，简单动态字符串）作为字符串表示。</p>
+<p>比起C字符串，SDS具有以下优点：</p>
+<p>​    1）常数复杂度获取字符串长度。</p>
+<p>​    2）杜绝缓冲区溢出。</p>
+<p>​    3）减少修改字符串长度时所需的内存重分配次数。</p>
+<p>​    4）二进制安全。</p>
+<p>​    5）兼容部分C字符串函数。</p>
+<p>SDS的定义</p>
+]]></content>
+      <categories>
+        <category>数据库</category>
+        <category>缓存</category>
+      </categories>
+      <tags>
+        <tag>Redis</tag>
       </tags>
   </entry>
 </search>

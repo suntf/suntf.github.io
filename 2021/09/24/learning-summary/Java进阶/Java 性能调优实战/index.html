@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+        
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>Java 性能调优实战 |  SUNTFの博客</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/images/icon.png" />
+       
+<link rel="stylesheet" href="../../../../../../dist/main.css">
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/css/remixicon.min.css"
+      />
+      
+<link rel="stylesheet" href="../../../../../../css/custom.css">
+ 
+      <script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+       
+ 
+
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bulma@5.0.1/bulma.min.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <link rel="alternate" href="atom.xml" title="SUNTFの博客" type="application/atom+xml">
+</head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-learning-summary/Java进阶/Java 性能调优实战"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Java 性能调优实战
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="" class="article-date">
+  <time datetime="2021-09-24T05:06:09.000Z" itemprop="datePublished">2021-09-24</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="../../../../../../categories/Java/">Java</a> / <a class="article-category-link" href="../../../../../../categories/Java/Java-%E8%BF%9B%E9%98%B6/">Java 进阶</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">6k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">21 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p>Java 性能调优实战</p>
+<h2 id="开篇"><a href="#开篇" class="headerlink" title="开篇"></a>开篇</h2><h3 id="怎样才能做好性能调优？"><a href="#怎样才能做好性能调优？" class="headerlink" title="怎样才能做好性能调优？"></a>怎样才能做好性能调优？</h3><p>技术广度：一个系统囊括了应用程序、数据库、容器、操作系统、网络等技术，线上一旦出现性能问题，就可能要你协调多方面组件去进行优化。</p>
+<p>技术深度：而很多性能问题呢，又隐藏得很深，可能因为一个小小的代码，也可能因为线程池的类型选择错<br>误…可归根结底考验的还是我们对这项技术的了解程度。</p>
+<h4 id="扎实的计算机基础"><a href="#扎实的计算机基础" class="headerlink" title="扎实的计算机基础"></a>扎实的计算机基础</h4><p>计算机组成原理、操作系统、网络协议以及数据库、数据结构、算法以及数学</p>
+<h4 id="习惯透过源码了解技术本质"><a href="#习惯透过源码了解技术本质" class="headerlink" title="习惯透过源码了解技术本质"></a>习惯透过源码了解技术本质</h4><p>深入源码分析总结一项技术的实现原理和优缺点</p>
+<h4 id="善于追问和总结"><a href="#善于追问和总结" class="headerlink" title="善于追问和总结"></a>善于追问和总结</h4><p>知其然且知所以然</p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><h3 id="如何制定性能调优标准？"><a href="#如何制定性能调优标准？" class="headerlink" title="如何制定性能调优标准？"></a>如何制定性能调优标准？</h3><p>我们为什么要做性能调优？什么时候开始做？做性能调优是不是有标准可参考？</p>
+<h4 id="为什么要做性能调优？"><a href="#为什么要做性能调优？" class="headerlink" title="为什么要做性能调优？"></a>为什么要做性能调优？</h4><p>线上产品如果没有经过性能测试，就好比是一颗定时炸弹，你不知道它什么时候会出现问题，你也不清楚它能承受的极限在哪儿。</p>
+<p>有些性能问题是时间累积慢慢产生的，到了一定时间自然就爆炸了；<br>更多的性能问题是由访问量的波动导致的；</p>
+<p>好的系统性能调优不仅仅可以提高系统的性能，还能为公司节省资源；</p>
+<h4 id="什么时候开始介入调优？"><a href="#什么时候开始介入调优？" class="headerlink" title="什么时候开始介入调优？"></a>什么时候开始介入调优？</h4><p>系统编码完成之后对系统进行性能测试。根据线上预期数据，进行压测，通过性能分析、统计工具来统计各项性能指标，看是否在预期范围之内。</p>
+<p>上线后，根据线上的实际情况，依照日志监控以及性能统计日志，来观测系统性能问题，一旦发现问题，就要对日志进行分析并及时修复问题。</p>
+<h4 id="有哪些参考因素可以体现系统的性能？"><a href="#有哪些参考因素可以体现系统的性能？" class="headerlink" title="有哪些参考因素可以体现系统的性能？"></a>有哪些参考因素可以体现系统的性能？</h4><ul>
+<li>CPU：有的应用需要大量计算，他们会长时间、不间断地占用 CPU 资源，导致其他资源无法争夺到 CPU 而响应缓慢，从而带来系统性能问题。例如，代码递归导致的无限循环，正则表达式引起的回溯，JVM 频繁的 FULL GC，以及多线程编程造成的大量上下文切换等，这些都有可能导致 CPU 资源繁忙。</li>
+<li>内存：Java 程序一般通过 JVM 对内存进行分配管理，主要是用 JVM 中的堆内存来存储 Java 创建的对象。系统堆内存的读写速度非常快，所以基本不存在读写性能瓶颈。但是由于内存成本要比磁盘高，相比磁盘，内存的存储空间又非常有限。所以当内存空间被占满，对象无法回收时，就会导致内存溢出、内存泄露等问题。</li>
+<li>磁盘 I/O：磁盘相比内存来说，存储空间要大很多，但磁盘 I/O 读写的速度要比内存慢，虽然目前引入的 SSD 固态硬盘已经有所优化，但仍然无法与内存的读写速度相提并论。</li>
+<li>网络：网络对于系统性能来说，也起着至关重要的作用。如果你购买过云服务，一定经历过，选择网络带宽大小这一环节。带宽过低的话，对于传输数据比较大，或者是并发量比较大的系统，网络就很容易成为性能瓶颈。</li>
+<li>异常：Java 应用中，抛出异常需要构建异常栈，对异常进行捕获和处理，这个过程非常消耗系统性能。如果在高并发的情况下引发异常，持续地进行异常处理，那么系统的性能就会明显地受到影响。</li>
+<li>数据库：大部分系统都会用到数据库，而数据库的操作往往是涉及到磁盘 I/O 的读写。大量的数据库读写操作，会导致磁盘 I/O 性能瓶颈，进而导致数据库操作的延迟性。对于有大量数据库读写操作的系统来说，数据库的性能优化是整个系统的核心。</li>
+<li>锁竞争：在并发编程中，我们经常会需要多个线程，共享读写操作同一个资源，这个时候为了保持数据的原子性（即保证这个共享资源在一个线程写的时候，不被另一个线程修改），我们就会用到锁。锁的使用可能会带来上下文切换，从而给系统带来性能开销。JDK1.6 之后，Java 为了降低锁竞争带来的上下文切换，对 JVM 内部锁已经做了多次优化，例如，新增了偏向锁、自旋锁、轻量级锁、锁粗化、锁消除等。而如何合理地使用锁资源，优化锁资源，就需要你了解更多的操作系统知识、Java 多线程编程基础，积累项目经验，并结合实际场景去处理相关问题。</li>
+</ul>
+<h4 id="下面几个指标，来衡量一般系统的性能。"><a href="#下面几个指标，来衡量一般系统的性能。" class="headerlink" title="下面几个指标，来衡量一般系统的性能。"></a>下面几个指标，来衡量一般系统的性能。</h4><p><strong>响应时间</strong></p>
+<ul>
+<li>数据库响应时间：数据库操作所消耗的时间，往往是整个请求链中最耗时的；</li>
+<li>服务端响应时间：服务端包括 Nginx 分发的请求所消耗的时间以及服务端程序执行所消耗的时间；</li>
+<li>网络响应时间：这是网络传输时，网络硬件需要对传输的请求进行解析等操作所消耗的时间；</li>
+<li>客户端响应时间：对于普通的 Web、App 客户端来说，消耗时间是可以忽略不计的，但如果你的客户端嵌入了大量的逻辑处理，消耗的时间就有可能变长，从而成为系统的瓶颈。</li>
+</ul>
+<p><strong>吞吐量</strong>：磁盘吞吐量、网络吞吐量</p>
+<ul>
+<li><p>磁盘吞吐量：IOPS、数据吞吐量</p>
+<ul>
+<li>IOPS（Input/Output Per Second）每秒的输入输出量（或读写次数）</li>
+<li>数据吞吐量：单位时间内可以成功传输的数据量</li>
+</ul>
+</li>
+<li><p>网络吞吐量：网络传输时没有帧丢失的情况下，设备能够接受的最大数据<br>速率。</p>
+</li>
+</ul>
+<p><strong>计算机资源分配使用率</strong></p>
+<p>CPU 占用率、内存使用率、磁盘 I/O、网络 I/O 来表示资源使用率</p>
+<p><strong>负载承受能力</strong></p>
+<p>当系统压力上升时，系统响应时间的上升曲线是否平缓。这项指标能直观地反映系统所能承受的负载压力极限。</p>
+<h3 id="如何制定性能调优策略？"><a href="#如何制定性能调优策略？" class="headerlink" title="如何制定性能调优策略？"></a>如何制定性能调优策略？</h3><p>测试 - 分析 - 调优</p>
+<h4 id="性能测试攻略"><a href="#性能测试攻略" class="headerlink" title="性能测试攻略"></a>性能测试攻略</h4><ol>
+<li><p>微基准性能测试</p>
+<p>微基准性能测试可以精准定位到某个模块或者某个方法的性能问题，特别适合做一个功能模块或者一个方法在不同实现方式下的性能对比。例如，对比一个方法使用同步实现和非同步实现的性能。</p>
+</li>
+<li><p>宏基准性能测试</p>
+<p>宏基准性能测试是一个综合测试，需要考虑到测试环境、测试场景和测试目标。需要模拟线上的真实环境。测试场景，是否有其他业务接口同时也在平行运行，造成干扰。性能测试是要有目标的，这里可以通过吞吐量以及响应时间来衡量系统是否达标。</p>
+</li>
+</ol>
+<p>性能测试存在干扰因子，会使测试结果不准确。</p>
+<ol>
+<li><p>热身问题</p>
+<p>解释器将字节码转换成本地机器码，随着代码被执行的次数增多，虚拟机会把运行特别频繁的方法或代码块认定为热点代码（Hot Spot Code），优化后存储在内存中。</p>
+</li>
+<li><p>性能测试结果不稳定</p>
+<p>机器其他进程的影响、网络波动以及每个阶段 JVM 垃圾回收的不同，可以通过多次测试，将测试结果求平均。</p>
+</li>
+<li><p>多 JVM 情况下的影响</p>
+<p>服务器有多个 Java 应用服务，任意一个 JVM 都拥有整个系统的资源使用权。尽量避免线上环境中一台机器部署多个 JVM 的情况。</p>
+</li>
+</ol>
+<h4 id="合理分析结果，制定调优策略"><a href="#合理分析结果，制定调优策略" class="headerlink" title="合理分析结果，制定调优策略"></a>合理分析结果，制定调优策略</h4><p>性能测试报告需要包含测试接口的平均、最大和最小吞吐量，响应时间，服务器的 CPU、内存、I/O、网络 IO 使用率，JVM 的 GC 频率等。</p>
+<p>先从操作系统层面，查看系统的 CPU、内存、I/O、网络的使用率是否存在异常，再通过命令查找异常日志，最后通过分析日志，找到导致瓶颈的原因；还可以从 Java 应用的 JVM 层面，查看 JVM 的垃圾回收频率以及内存分配情况是否存在异常，分析日志，找到导致瓶颈的原因。</p>
+<p>如果系统和 JVM 层面都没有出现异常情况，我们可以查看应用服务业务层是否存在性能瓶颈，例如 Java 编程的问题、读写数据瓶颈等等。</p>
+<p>分析查找问题可以采用自下而上的方式，而我们解决系统性能问题，则可以采用自上而下的方式逐级优化。下面介绍从应用层到操作系统层的几种调优策略。</p>
+<ol>
+<li><p>优化代码</p>
+<p>应用层的问题代码往往会因为耗尽系统资源而暴露出来。代码导致内存溢出，将 JVM 中的内存用完了，这个时候系统的内存资源消耗殆尽了，同时也会引发 JVM 频繁地发生垃圾回收，导致 CPU 100% 以上居高不下，这个时候又消耗了系统的 CPU 资源。</p>
+<p>非问题代码导致的性能问题，LinkedList 集合，如果使用 for 循环遍历该容器将大大降低读的效率。改用 Iterator （迭代器）迭代循环该集合。</p>
+</li>
+<li><p>优化设计</p>
+<p>面向对象有很多设计模式，可以帮助我们优化业务层以及中间件层的代码设计。可以精简代码，还能提高整体性能。例如，单例模式在频繁调用创建对象的场景中，可以共享一个创建对象，减少频繁地创建和销毁对象所带来的性能消耗。</p>
+</li>
+<li><p>优化算法</p>
+<p>好的算法可以帮助我们大大地提升系统性能。例如，在不同的场景中，使用合适的查找算法可以降低时间复杂度。</p>
+</li>
+<li><p>时间换空间</p>
+<p>有时候系统对查询时的速度并没有很高的要求，反而对存储空间要求苛刻，这个时候我们可以考虑用时间来换取空间。</p>
+</li>
+<li><p>空间换时间</p>
+<p>这种方法是使用存储空间来提升访问速度。现在很多系统都是使用的 MySQL 数据库，较为常见的分表分库是典型的使用空间换时间的案例。</p>
+</li>
+<li><p>参数调优</p>
+<p>JVM、Web 容器以及操作系统的优化也是非常关键的。</p>
+<p>根据业务场景，合理地设置 JVM 的内存空间以及垃圾回收算法可以提升系统性能。例如，业务中会创建大量的大对象，可以通过设置，将这些大对象直接放进老年代。这样可以减少年轻代频繁发生小的垃圾回收（Minor GC），减少 CPU 占用时间，提升系统性能。</p>
+<p>Web 容器线程池的设置以及 Linux 操作系统的内核参数设置不合理也有可能导致系统性能瓶颈，根据业务场景优化这两部分，可以提升系统性能。</p>
+</li>
+<li><p>兜底策略</p>
+<p>限流，对系统的入口设置最大访问限制。同时采取熔断措施，友好地返回没有成功的请求。</p>
+<p>实现智能化横向扩容。智能化横向扩容可以保证当访问量超过某一个阈值时，系统可以根据需求自动横向新增服务。</p>
+<p>提前扩容。这种方法通常应用于高并发系统，例如，瞬时抢购业务系统。这是因为横向扩容无法满足大量发生在瞬间的请求，即使成功了，抢购也结束了。</p>
+<p> Kubernetes 可以实现智能化横向扩容和提前扩容 Docker 服务。</p>
+</li>
+</ol>
+<h2 id="Java-编程性能调优"><a href="#Java-编程性能调优" class="headerlink" title="Java 编程性能调优"></a>Java 编程性能调优</h2><h3 id="字符串性能优化"><a href="#字符串性能优化" class="headerlink" title="字符串性能优化"></a>字符串性能优化</h3><h3 id="慎重使用正则表达式"><a href="#慎重使用正则表达式" class="headerlink" title="慎重使用正则表达式"></a>慎重使用正则表达式</h3><h3 id="ArrayList-还是-LinkedList？使用不当性能差千倍"><a href="#ArrayList-还是-LinkedList？使用不当性能差千倍" class="headerlink" title="ArrayList 还是 LinkedList？使用不当性能差千倍"></a>ArrayList 还是 LinkedList？使用不当性能差千倍</h3><h3 id="Stream如何提高遍历集合的效率"><a href="#Stream如何提高遍历集合的效率" class="headerlink" title="Stream如何提高遍历集合的效率"></a>Stream如何提高遍历集合的效率</h3><p> Stream 中的操作分为两大类：中间操作（Intermediate operations）和终结操作（Terminal operations）。中间操作只对操作进行了记录，即只会返回一个流，不会进行计算操作，而终结操作是实现了计算操作。</p>
+<p>中间操作又可以分为无状态（Stateless）与有状态（Stateful）操作，前者是指元素的处理不受之前元素的影响，后者是指该操作只有拿到所有元素之后才能继续下去。</p>
+<p>终结操作又可以分为短路（Short-circuiting）与非短路（Unshort-circuiting）操作，前者是指遇到某些符合条件的元素就可以得到最终结果，后者是指必须处理完所有元素才能得到最终结果。</p>
+<p><img src="D:\workspace\gitee\cdn\java\stream1.png" alt="输入图片说明"></p>
+<p>我们通常还会将中间操作称为懒操作，也正是由这种懒操作结合终结操作、数据源构成的处理管道（Pipeline），实现了 Stream 的高效。</p>
+<p>Stream 处理数据的方式有两种，串行处理和并行处理。要实现并行处理，我们只需要在例子的代码中新增一个 Parallel() 方法。</p>
+<p>在并行处理操作中，Stream 对中间操作基本跟串行处理方式是一样的，但在终结操作中，Stream 将结合 ForkJoin 框架对集合进行切片处理，ForkJoin 框架将每个切片的处理结果 Join 合并起来。</p>
+<h3 id="深入浅出-HashMap-的设计与优化"><a href="#深入浅出-HashMap-的设计与优化" class="headerlink" title="深入浅出 HashMap 的设计与优化"></a>深入浅出 HashMap 的设计与优化</h3><h4 id="常用的数据结构"><a href="#常用的数据结构" class="headerlink" title="常用的数据结构"></a>常用的数据结构</h4><p><strong>数组</strong>：采用一段连续的存储单元来存储数据。对于指定下标的查找，时间复杂度为 O(1)，但在数组中间以及头部插入数据时，需要复制移动后面的元素。</p>
+<p><strong>链表</strong>：一种在物理存储单元上非连续、非顺序的存储结构，数据元素的逻辑顺序是通过链表中的指针链接次序实现的。</p>
+<p>链表由一系列结点（链表中每一个元素）组成，结点可以在运行时动态生成。每个结点都包含“存储数据单元的数据域”和“存储下一个结点地址的指针域”这两个部分。</p>
+<p>由于链表不用必须按顺序存储，所以链表在插入的时候可以达到 O(1) 的复杂度，但查找一个结点或者访问特定编号的结点需要 O(n) 的时间。</p>
+<p><strong>哈希表</strong>：根据关键码值（Key value）直接进行访问的数据结构。通过把关键码值映射到表中一个位置来访问记录，以加快查找的速度。这个映射函数叫做哈希函数，存放记录的数组就叫做哈希表。</p>
+<p><strong>树</strong>：由 n（n≥1）个有限结点组成的一个具有层次关系的集合，就像是一棵倒挂的树。</p>
+<h4 id="HashMap-的实现结构"><a href="#HashMap-的实现结构" class="headerlink" title="HashMap 的实现结构"></a>HashMap 的实现结构</h4><p>作为最常用的 Map 类，它是基于哈希表实现的，继承了 AbstractMap 并且实现了 Map 接口。</p>
+<p>哈希表将键的 Hash 值映射到内存地址，即根据键获取对应的值，并将其存储到内存地址。也就是说 HashMap 是根据键的 Hash 值来决定对应值的存储位置。通过这种索引方式，HashMap 获取数据的速度会非常快。</p>
+<p>哈希表是怎么解决的呢？开放定址法、再哈希函数法和链地址法。</p>
+<p>开放定址法很简单，当发生哈希冲突时，如果哈希表未被装满，说明在哈希表中必然还有空位置，那么可以把 key 存放到冲突位置的空位置上去。这种方法存在着很多缺点，例如，查找、扩容等，所以我不建议你作为解决哈希冲突的首选。</p>
+<p>再哈希法顾名思义就是在同义词产生地址冲突时再计算另一个哈希函数地址，直到冲突不再发生，这种方法不易产生“聚集”，但却增加了计算时间。如果我们不考虑添加元素的时间成本，且对查询元素的要求极高，就可以考虑使用这种算法设计。</p>
+<p>HashMap 则是综合考虑了所有因素，采用链地址法解决哈希冲突问题。这种方法是采用了数组（哈希表）+ 链表的数据结构，当发生哈希冲突时，就用一个链表结构存储相同 Hash 值的数据。</p>
+<h4 id="HashMap-的重要属性"><a href="#HashMap-的重要属性" class="headerlink" title="HashMap 的重要属性"></a>HashMap 的重要属性</h4><p>从 HashMap 的源码中，我们可以发现，HashMap 是由一个 Node 数组构成，每个 Node 包含了一个 key-value 键值对。</p>
+<p>Node 类作为 HashMap 中的一个内部类，除了 key、value 两个属性外，还定义了一个 next 指针。当有哈希冲突时，HashMap 会用之前数组当中相同哈希值对应存储的 Node 对象，通过指针指向新增的相同哈希值的 Node 对象的引用。</p>
+<p>HashMap 还有两个重要的属性：加载因子（loadFactor）和边界值（threshold）。在初始化 HashMap 时，就会涉及到这两个关键初始化参数。</p>
+<p>LoadFactor 属性是用来间接设置 Entry 数组（哈希表）的内存空间大小，在初始 HashMap 不设置参数的情况下，默认 LoadFactor 值为 0.75。为什么是 0.75 这个值呢？</p>
+<p>这是因为对于使用链表法的哈希表来说，查找一个元素的平均时间是 O(1+n)，这里的 n 指的是遍历链表的长度，因此加载因子越大，对空间的利用就越充分，这就意味着链表的长度越长，查找效率也就越低。如果设置的加载因子太小，那么哈希表的数据将过于稀疏，对空间造成严重浪费。</p>
+<h3 id="网络通信优化之IO模型：如何解决高并发下IO瓶颈？"><a href="#网络通信优化之IO模型：如何解决高并发下IO瓶颈？" class="headerlink" title="网络通信优化之IO模型：如何解决高并发下IO瓶颈？"></a>网络通信优化之IO模型：如何解决高并发下IO瓶颈？</h3><h3 id="网络通信优化之序列化：避免使用-Java-序列化"><a href="#网络通信优化之序列化：避免使用-Java-序列化" class="headerlink" title="网络通信优化之序列化：避免使用 Java 序列化"></a>网络通信优化之序列化：避免使用 Java 序列化</h3><h3 id="网络通信优化之通信协议：如何优化RPC网络通信？"><a href="#网络通信优化之通信协议：如何优化RPC网络通信？" class="headerlink" title="网络通信优化之通信协议：如何优化RPC网络通信？"></a>网络通信优化之通信协议：如何优化RPC网络通信？</h3><h3 id="深入了解NIO的优化实现原理"><a href="#深入了解NIO的优化实现原理" class="headerlink" title="深入了解NIO的优化实现原理"></a>深入了解NIO的优化实现原理</h3><h3 id="性能测试工具"><a href="#性能测试工具" class="headerlink" title="性能测试工具"></a>性能测试工具</h3><h2 id="多行程性能调优"><a href="#多行程性能调优" class="headerlink" title="多行程性能调优"></a>多行程性能调优</h2><h3 id="深入了解-Synchronized-同步锁的优化方法"><a href="#深入了解-Synchronized-同步锁的优化方法" class="headerlink" title="深入了解 Synchronized 同步锁的优化方法"></a>深入了解 Synchronized 同步锁的优化方法</h3><p>在并发编程中，多个线程访问同一个共享资源时，我们必须考虑如何维护数据的原子性。在 JDK1.5 之前，Java 是依靠 Synchronized 关键字实现锁功能来做到这点的。Synchronized 是 JVM 实现的一种内置锁，锁的获取和释放是由 JVM 隐式实现。</p>
+<p>到了 JDK1.5 版本，并发包中新增了 Lock 接口来实现锁功能，它提供了与 Synchronized 关键字类似的同步功能，只是在使用时需要显示获取和释放锁。</p>
+<p>Lock 同步锁是基于 Java 实现的，而 Synchronized 是基于底层操作系统的 Mutex Lock 实现的，每次获取和释放锁操作都会带来用户态和内核态的切换，从而增加系统性能开销。</p>
+<p>在锁竞争激烈的情况下，Synchronized 同步锁在性能上就表现得非常糟糕，它也常被大家称为重量级锁。</p>
+<p>JDK1.6 版本之后，Java 对 Synchronized 同步锁做了充分的优化，甚至在某些场景下，它的性能已经超越了 Lock 同步锁。我们来看看 Synchronized 同步锁究竟是通过了哪些优化，实现了性能地提升。</p>
+<h4 id="Synchronized-同步锁实现原理"><a href="#Synchronized-同步锁实现原理" class="headerlink" title="Synchronized 同步锁实现原理"></a>Synchronized 同步锁实现原理</h4><p>通常 Synchronized 实现同步锁的方式有两种，一种是修饰方法，一种是修饰方法块。以下就是通过 Synchronized 实现的两种同步方法加锁的方式：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 关键字在实例方法上，锁为当前实例</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">method1</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// code</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 关键字在代码块上，锁为括号里面的对象</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Object o = <span class="keyword">new</span> Object();</span><br><span class="line">    <span class="keyword">synchronized</span> (o) &#123;</span><br><span class="line">        <span class="comment">// code</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>我们可以通过反编译看下具体字节码的实现，运行以下反编译命令，就可以输出我们想要的字节码：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">javac -encoding UTF-8 SyncTest.java  // 先运行编译 class 文件命令</span><br><span class="line"></span><br><span class="line">javap -v SyncTest.class // 再通过 javap 打印出字节文件</span><br></pre></td></tr></table></figure>
+
+<p>通过输出的字节码，你会发现：Synchronized 在修饰同步代码块时，是由 monitorenter 和 monitorexit 指令来实现同步的。进入 monitorenter 指令后，线程将持有 Monitor 对象，退出 monitorenter 指令后，线程将释放该 Monitor 对象。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">public void method2();</span><br><span class="line">    descriptor: ()V</span><br><span class="line">    flags: ACC_PUBLIC</span><br><span class="line">    Code:</span><br><span class="line">      stack=2, locals=4, args_size=1</span><br><span class="line">         0: new           #2                  </span><br><span class="line">         3: dup</span><br><span class="line">         4: invokespecial #1                  </span><br><span class="line">         7: astore_1</span><br><span class="line">         8: aload_1</span><br><span class="line">         9: dup</span><br><span class="line">        10: astore_2</span><br><span class="line">        11: monitorenter //monitorenter 指令</span><br><span class="line">        12: aload_2</span><br><span class="line">        13: monitorexit  //monitorexit  指令</span><br><span class="line">        14: goto          22</span><br><span class="line">        17: astore_3</span><br><span class="line">        18: aload_2</span><br><span class="line">        19: monitorexit</span><br><span class="line">        20: aload_3</span><br><span class="line">        21: athrow</span><br><span class="line">        22: return</span><br><span class="line">      Exception table:</span><br><span class="line">         from    to  target type</span><br><span class="line">            12    14    17   any</span><br><span class="line">            17    20    17   any</span><br><span class="line">      LineNumberTable:</span><br><span class="line">        line 18: 0</span><br><span class="line">        line 19: 8</span><br><span class="line">        line 21: 12</span><br><span class="line">        line 22: 22</span><br><span class="line">      </span><br><span class="line">      StackMapTable: number_of_entries = 2</span><br><span class="line">        frame_type = 255 /* full_frame */</span><br><span class="line">          offset_delta = 17</span><br><span class="line">          locals = [ class com/demo/io/SyncTest, class java/lang/Object, class java/lang</span><br><span class="line">          stack = [ class java/lang/Throwable ]</span><br><span class="line">        frame_type = 250 /* chop */</span><br><span class="line">		offset_delta = 4</span><br></pre></td></tr></table></figure>
+
+
+
+<p>再看以下同步方法的字节码，当 Synchronized 修饰同步方法时，并没有发现 monitorenter 和 monitorexit 指令，而是出现了一个 ACC_SYNCHRONIZED 标志。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public synchronized void method1();</span><br><span class="line">   descriptor: ()V</span><br><span class="line">   flags: ACC_PUBLIC, ACC_SYNCHRONIZED // ACC_SYNCHRONIZED 标志</span><br><span class="line">   Code:</span><br><span class="line">     stack=0, locals=1, args_size=1</span><br><span class="line">        0: return</span><br><span class="line">     LineNumberTable:</span><br><span class="line">       line 8: 0</span><br></pre></td></tr></table></figure>
+
+<p>这是因为 JVM 使用了 ACC_SYNCHRONIZED 访问标志来区分一个方法是否是同步方法。当方法调用时，调用指令将会检查该方法是否被设置 ACC_SYNCHRONIZED 访问标志。如果设置了该标志，执行线程将先持有 Monitor 对象，然后再执行方法。在该方法运行期间，其它线程将无法获取到该 Mointor 对象，当方法执行完成后，再释放该 Monitor 对象。</p>
+<p> Synchronized 修饰方法是怎么实现锁原理的。</p>
+<p>JVM 中的同步是基于进入和退出管程（Monitor）对象实现的。每个对象实例都会有一个 Monitor，Monitor 可以和对象一起创建、销毁。Monitor 是由 ObjectMonitor 实现，而 ObjectMonitor 是由 C++ 的 ObjectMonitor.hpp 文件实现，如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">ObjectMonitor() &#123;</span><br><span class="line">   _header = NULL;</span><br><span class="line">   _count = 0; // 记录个数</span><br><span class="line">   _waiters = 0,</span><br><span class="line">   _recursions = 0;</span><br><span class="line">   _object = NULL;</span><br><span class="line">   _owner = NULL;</span><br><span class="line">   _WaitSet = NULL; // 处于 wait 状态的线程，会被加入到 _WaitSet</span><br><span class="line">   _WaitSetLock = 0 ;</span><br><span class="line">   _Responsible = NULL ;</span><br><span class="line">   _succ = NULL ;</span><br><span class="line">   _cxq = NULL ;</span><br><span class="line">   FreeNext = NULL ;</span><br><span class="line">   _EntryList = NULL ; // 处于等待锁 block 状态的线程，会被加入到该列表</span><br><span class="line">   _SpinFreq = 0 ;</span><br><span class="line">   _SpinClock = 0 ;</span><br><span class="line">   OwnerIsThread = 0 ;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当多个线程同时访问一段同步代码时，多个线程会先被存放在 EntryList 集合中，处于 block 状态的线程，都会被加入到该列表。接下来当线程获取到对象的 Monitor 时，Monitor 是依靠底层操作系统的 Mutex Lock 来实现互斥的，线程申请 Mutex 成功，则持有该 Mutex，其它线程将无法获取到该 Mutex。</p>
+<p>如果线程调用 wait() 方法，就会释放当前持有的 Mutex，并且该线程会进入 WaitSet 集合中，等待下一次被唤醒。如果当前线程顺利执行完方法，也将释放 Mutex。</p>
+<h2 id="JVM-性能监测及调优"><a href="#JVM-性能监测及调优" class="headerlink" title="JVM 性能监测及调优"></a>JVM 性能监测及调优</h2><h2 id="设计模式调优"><a href="#设计模式调优" class="headerlink" title="设计模式调优"></a>设计模式调优</h2><h2 id="数据库性能调优"><a href="#数据库性能调优" class="headerlink" title="数据库性能调优"></a>数据库性能调优</h2><h2 id="实战演练场"><a href="#实战演练场" class="headerlink" title="实战演练场"></a>实战演练场</h2> 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+<div class="share-btn">
+      <span class="share-sns share-outer">
+        <i class="ri-share-forward-line"></i>
+        分享
+      </span>
+      <div class="share-wrap">
+        <i class="arrow"></i>
+        <div class="share-icons">
+          
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="ri-weibo-fill"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="ri-wechat-fill"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="ri-qq-fill"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="ri-douban-line"></i>
+          </a>
+          <!-- <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a> -->
+          
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="ri-facebook-circle-fill"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="ri-twitter-fill"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="ri-google-fill"></i>
+          </a>
+        </div>
+      </div>
+</div>
+
+<div class="wx-share-modal">
+    <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://suntf.github.io/2021/09/24/learning-summary/Java%E8%BF%9B%E9%98%B6/Java%20%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E5%AE%9E%E6%88%98/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div id="share-mask"></div>  
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="../../../../../../tags/%E6%80%A7%E8%83%BD/" rel="tag">性能</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="../../Java%E5%9F%BA%E7%A1%80/Java%E5%9F%BA%E7%A1%80%E4%B8%8D%E7%AE%80%E5%8D%95%EF%BC%8C%E8%AE%B2%E4%B8%80%E8%AE%B2%E6%9E%9A%E4%B8%BE/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Java基础不简单，讲一讲枚举
+          
+        </div>
+      </a>
+    
+    
+      <a href="../../%E5%AE%B9%E5%99%A8%E6%9C%8D%E5%8A%A1%E4%B8%8E%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E5%8F%8A%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Docker 常用命令及常见问题</div>
+      </a>
+    
+  </nav>
+
+   
+<!-- valine评论 -->
+<div id="vcomments-box">
+  <div id="vcomments"></div>
+</div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/valine@1.4.14/dist/Valine.min.js"></script>
+<script>
+  new Valine({
+    el: "#vcomments",
+    app_id: "OPHezzRFWEkJEh1IgKfDDu9l-gzGzoHsz",
+    app_key: "R31yy5tGHsl4ra9HvGRkTzMc",
+    path: window.location.pathname,
+    avatar: "monsterid",
+    placeholder: "给我的文章加点评论吧~",
+    recordIP: true,
+  });
+  const infoEle = document.querySelector("#vcomments .info");
+  if (infoEle && infoEle.childNodes && infoEle.childNodes.length > 0) {
+    infoEle.childNodes.forEach(function (item) {
+      item.parentNode.removeChild(item);
+    });
+  }
+</script>
+<style>
+  #vcomments-box {
+    padding: 5px 30px;
+  }
+
+  @media screen and (max-width: 800px) {
+    #vcomments-box {
+      padding: 5px 0px;
+    }
+  }
+
+  #vcomments-box #vcomments {
+    background-color: #fff;
+  }
+
+  .v .vlist .vcard .vh {
+    padding-right: 20px;
+  }
+
+  .v .vlist .vcard {
+    padding-left: 10px;
+  }
+</style>
+
+ 
+   
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2020-2021
+        <i class="ri-heart-fill heart_icon"></i> suntf
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+        
+        <span>
+  <span><i class="ri-user-3-fill"></i>访问人数:<span id="busuanzi_value_site_uv"></span></span>
+  <span class="division">|</span>
+  <span><i class="ri-eye-fill"></i>浏览次数:<span id="busuanzi_value_page_pv"></span></span>
+</span>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+<div class="todark" id="todark">
+  <i class="ri-moon-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="../../../../../../index.html"><img src="/images/icon.png" alt="SUNTFの博客"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../index.html">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../tags">标签</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../friends">友链</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="../../../../../../about">关于我</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>请我喝杯咖啡吧~</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/weixin.png">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="../../../../../../images/zhifubao.png">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="../../../../../../js/jquery-3.6.0.min.js"></script>
+ 
+<script src="../../../../../../js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="../../../../../../js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/jquery-modal@0.9.2/jquery.modal.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="../../../../../../dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" style="display:none" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css">
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"></script>
+
+<script>
+    function viewer_init() {
+        let pswpElement = document.querySelectorAll('.pswp')[0];
+        let $imgArr = document.querySelectorAll(('.article-entry img:not(.reward-img)'))
+
+        $imgArr.forEach(($em, i) => {
+            $em.onclick = () => {
+                // slider展开状态
+                // todo: 这样不好，后面改成状态
+                if (document.querySelector('.left-col.show')) return
+                let items = []
+                $imgArr.forEach(($em2, i2) => {
+                    let img = $em2.getAttribute('data-idx', i2)
+                    let src = $em2.getAttribute('data-target') || $em2.getAttribute('src')
+                    let title = $em2.getAttribute('alt')
+                    // 获得原图尺寸
+                    const image = new Image()
+                    image.src = src
+                    items.push({
+                        src: src,
+                        w: image.width || $em2.width,
+                        h: image.height || $em2.height,
+                        title: title
+                    })
+                })
+                var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+                    index: parseInt(i)
+                });
+                gallery.init()
+            }
+        })
+    }
+    viewer_init()
+</script> 
+<!-- MathJax -->
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+ 
+<script src="../../../../../../js/busuanzi-2.3.pure.min.js"></script>
+ 
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="../../../../../../css/clipboard.css">
+ <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !function (e, t, a) {
+    var initCopyCode = function(){
+      var copyHtml = '';
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += '</button>';
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS('.btn-copy', {
+        target: function(trigger) {
+          return trigger.nextElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        let $btn = $(e.trigger);
+        $btn.addClass('copied');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-checkbox-circle-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPIED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-checkbox-circle-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+      clipboard.on('error', function(e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass('copy-failed');
+        let $icon = $($btn.find('i'));
+        $icon.removeClass('ri-file-copy-2-line');
+        $icon.addClass('ri-time-line');
+        let $span = $($btn.find('span'));
+        $span[0].innerText = 'COPY FAILED';
+        
+        wait(function () { // 等待两秒钟后恢复
+          $icon.removeClass('ri-time-line');
+          $icon.addClass('ri-file-copy-2-line');
+          $span[0].innerText = 'COPY';
+        }, 2000);
+      });
+    }
+    initCopyCode();
+  }(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "forest" });
+  }
+</script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>
